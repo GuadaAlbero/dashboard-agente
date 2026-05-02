@@ -1,13 +1,39 @@
-import './App.css';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+
+// Componente que protege rutas — solo deja pasar si hay token
+function RutaProtegida({ children }) {
+  const token = localStorage.getItem('token');
+  // ── CUANDO EL BACK ESTÉ LISTO ────────────────────────────────
+  // Esta línea ya funciona sola — cuando el login guarde el token
+  // en localStorage, esta ruta lo va a detectar automáticamente.
+  // No hace falta cambiar nada acá.
+  // ─────────────────────────────────────────────────────────────
+
+  // Por ahora dejamos pasar siempre para poder desarrollar
+  // Cuando el back esté listo, cambiar true por: !!token
+  const estaAutenticado = true;
+
+  return estaAutenticado ? children : <Navigate to="/login" />;
+}
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Agente IA de Servicio de Soporte Nivel 1</h1>
-        <p>BDT Global — ORT Instituto de Tecnología</p>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/dashboard"
+          element={
+            <RutaProtegida>
+              <Dashboard />
+            </RutaProtegida>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

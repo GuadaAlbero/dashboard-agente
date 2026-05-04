@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Metricas from './pages/Metricas';
 
-// Componente que protege rutas — solo deja pasar si hay token
 function RutaProtegida({ children }) {
   const token = localStorage.getItem('token');
   // ── CUANDO EL BACK ESTÉ LISTO ────────────────────────────────
@@ -29,6 +29,14 @@ function App() {
           element={
             <RutaProtegida>
               <Dashboard />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/metricas"
+          element={
+            <RutaProtegida>
+              <Metricas />
             </RutaProtegida>
           }
         />

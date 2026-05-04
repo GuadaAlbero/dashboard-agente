@@ -7,7 +7,7 @@ export default function Dashboard() {
   const [sidebarAbierto, setSidebarAbierto] = useState(true);
 
   // ── DATOS HARDCODEADOS — reemplazar cuando el back esté listo ────
-  const [metricasBack, setMetricasBack] = useState({
+  const [metricasBack] = useState({
     ingresados: 64,
     resueltos: 55,
     noResueltos: 7,

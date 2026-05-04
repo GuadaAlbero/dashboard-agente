@@ -4,7 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Metricas from './pages/Metricas';
 
 function RutaProtegida({ children }) {
-  const token = localStorage.getItem('token');
+  // const token = localStorage.getItem('token'); // descomentar cuando el back esté listo
   // ── CUANDO EL BACK ESTÉ LISTO ────────────────────────────────
   // Esta línea ya funciona sola — cuando el login guarde el token
   // en localStorage, esta ruta lo va a detectar automáticamente.

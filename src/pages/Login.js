@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import axios from 'axios'; // descomentar cuando el back esté listo
+import axios from 'axios';
+
+const URL_BACK = 'http://alb-agentai-us-east-1-dev-1625283037.us-east-1.elb.amazonaws.com';
 
 function Login() {
   const [isRegistro, setIsRegistro] = useState(false);
-  const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [esperandoConfirmacion, setEsperandoConfirmacion] = useState(false);
+  const [codigo, setCodigo] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
@@ -15,16 +18,6 @@ function Login() {
 
     if (!email || !password) {
       setError('Completá todos los campos.');
-      return;
-    }
-
-    if (isRegistro && !nombre) {
-      setError('Completá tu nombre completo.');
-      return;
-    }
-
-    if (isRegistro && nombre.trim().length < 5) {
-      setError('El nombre debe tener al menos 5 caracteres.');
       return;
     }
 
@@ -63,23 +56,30 @@ function Login() {
       return;
     }
 
-    // ── CONECTAR CON EL BACK CUANDO ESTÉ LISTO ──────────────────
-    // Reemplazar el navigate de abajo por esto:
-    //
-    // try {
-    //   if (isRegistro) {
-    //     await axios.post('URL_DEL_BACK/register', { nombre, email, password });
-    //   }
-    //   const response = await axios.post('URL_DEL_BACK/login', { email, password });
-    //   localStorage.setItem('token', response.data.token);
-    //   navigate('/dashboard');
-    // } catch (err) {
-    //   setError('Email o contraseña incorrectos.');
-    // }
-    // ────────────────────────────────────────────────────────────
+    try {
+      if (isRegistro) {
+        await axios.post(`${URL_BACK}/auth/sign-up`, { email, password });
+        setEsperandoConfirmacion(true);
+        return;
+      }
+      const response = await axios.post(`${URL_BACK}/auth/sign-in`, { email, password });
+      localStorage.setItem('token', response.data.token);
+      navigate('/dashboard');
+    } catch (err) {
+      setError('Email o contraseña incorrectos.');
+    }
+  };
 
-    // Borrar esta línea cuando el back esté listo:
-    navigate('/dashboard');
+  const confirmarCodigo = async () => {
+    try {
+      await axios.post(`${URL_BACK}/auth/confirm`, { email, codigo });
+      setEsperandoConfirmacion(false);
+      setError('');
+      alert('Cuenta confirmada. Ya podés iniciar sesión.');
+      setIsRegistro(false);
+    } catch (err) {
+      setError('Código incorrecto o expirado.');
+    }
   };
 
   return (
@@ -93,54 +93,61 @@ function Login() {
 
         {error && <div style={styles.error}>{error}</div>}
 
-        {isRegistro && (
-          <div style={styles.field}>
-            <label style={styles.label}>Nombre completo</label>
+        {esperandoConfirmacion && (
+          <div style={styles.info}>
+            Te mandamos un código al mail. Ingresalo para confirmar tu cuenta.
             <input
-              style={styles.input}
+              style={{ ...styles.input, marginTop: '8px' }}
               type="text"
-              placeholder="Tu nombre"
-              value={nombre}
-              onChange={e => setNombre(e.target.value)}
+              placeholder="Código de confirmación"
+              value={codigo}
+              onChange={e => setCodigo(e.target.value)}
             />
+            <button style={{ ...styles.btn, marginTop: '8px' }} onClick={confirmarCodigo}>
+              Confirmar
+            </button>
           </div>
         )}
 
-        <div style={styles.field}>
-          <label style={styles.label}>Email</label>
-          <input
-            style={styles.input}
-            type="email"
-            placeholder="operador@estudio.com"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-          />
-        </div>
+        {!esperandoConfirmacion && (
+          <>
+            <div style={styles.field}>
+              <label style={styles.label}>Email</label>
+              <input
+                style={styles.input}
+                type="email"
+                placeholder="operador@estudio.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </div>
 
-        <div style={styles.field}>
-          <label style={styles.label}>Contraseña</label>
-          <input
-            style={styles.input}
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-          />
-        </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Contraseña</label>
+              <input
+                style={styles.input}
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+              />
+            </div>
 
-        <button style={styles.btn} onClick={handleSubmit}>
-          {isRegistro ? 'Registrarse' : 'Ingresar'}
-        </button>
+            <button style={styles.btn} onClick={handleSubmit}>
+              {isRegistro ? 'Registrarse' : 'Ingresar'}
+            </button>
 
-        <div style={styles.toggle}>
-          {isRegistro ? '¿Ya tenés cuenta?' : '¿No tenés cuenta?'}
-          <span
-            style={styles.link}
-            onClick={() => { setIsRegistro(!isRegistro); setError(''); }}
-          >
-            {isRegistro ? ' Iniciá sesión' : ' Registrate'}
-          </span>
-        </div>
+            <div style={styles.toggle}>
+              {isRegistro ? '¿Ya tenés cuenta?' : '¿No tenés cuenta?'}
+              <span
+                style={styles.link}
+                onClick={() => { setIsRegistro(!isRegistro); setError(''); }}
+              >
+                {isRegistro ? ' Iniciá sesión' : ' Registrate'}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -154,6 +161,7 @@ const styles = {
   logoSub: { fontSize: '13px', color: '#64748b', marginTop: '4px' },
   divider: { border: 'none', borderTop: '1px solid #e2e8f0', marginBottom: '20px' },
   error: { background: '#fef2f2', color: '#dc2626', fontSize: '13px', padding: '10px 12px', borderRadius: '8px', marginBottom: '16px' },
+  info: { background: '#eff6ff', color: '#2563A8', fontSize: '13px', padding: '10px 12px', borderRadius: '8px', marginBottom: '16px' },
   field: { marginBottom: '16px' },
   label: { display: 'block', fontSize: '13px', color: '#64748b', marginBottom: '6px' },
   input: { width: '100%', fontSize: '13px', padding: '9px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', boxSizing: 'border-box', outline: 'none' },

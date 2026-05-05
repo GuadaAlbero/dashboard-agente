@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const URL_BACK = 'http://alb-agentai-us-east-1-dev-1625283037.us-east-1.elb.amazonaws.com';
+const URL_BACK = process.env.REACT_APP_API_URL || '/api';
 
 function Login() {
   const [isRegistro, setIsRegistro] = useState(false);

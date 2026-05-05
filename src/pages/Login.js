@@ -72,7 +72,7 @@ function Login() {
 
   const confirmarCodigo = async () => {
     try {
-      await axios.post(`${URL_BACK}/auth/confirm`, { email, codigo });
+      await axios.post(`${URL_BACK}/auth/confirm`, { email, code: String(codigo) });
       setEsperandoConfirmacion(false);
       setError('');
       alert('Cuenta confirmada. Ya podés iniciar sesión.');

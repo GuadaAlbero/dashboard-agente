@@ -24,13 +24,13 @@ export default function Sidebar({ paginaActiva, sidebarAbierto, setSidebarAbiert
           style={paginaActiva === 'dashboard' ? styles.navItemActive : styles.navItem}
           onClick={() => navigate('/dashboard')}
         >
-          {sidebarAbierto ? 'Dashboard' : '📊'}
+          {sidebarAbierto ? 'Dashboard' : <img src='logo192.png' width={20} height={20} />}
         </div>
         <div
           style={paginaActiva === 'metricas' ? styles.navItemActive : styles.navItem}
           onClick={() => navigate('/metricas')}
         >
-          {sidebarAbierto ? 'Métricas' : '📈'}
+          {sidebarAbierto ? 'Métricas' : <img src='logo512.png' width={20} height={20} />}
         </div>
       </nav>
       <div style={styles.sidebarFooter}>

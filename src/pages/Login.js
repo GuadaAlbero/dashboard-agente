@@ -154,7 +154,14 @@ function Login() {
 }
 
 const styles = {
-  screen: { minHeight: '100vh', background: '#f1f5f9', display: 'flex', justifyContent: 'center', alignItems: 'center' },
+  screen: {
+    minHeight: '100vh',
+    background: '#f1f5f9',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  
   card: { background: 'white', borderRadius: '12px', padding: '32px', width: '100%', maxWidth: '360px', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' },
   logo: { textAlign: 'center', marginBottom: '20px' },
   logoName: { fontSize: '20px', fontWeight: '600', color: '#1A3A5C' },

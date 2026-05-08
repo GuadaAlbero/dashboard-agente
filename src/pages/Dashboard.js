@@ -1,43 +1,76 @@
-import { useState } from 'react';
-import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { useState, useEffect } from 'react';
+import {
+  PieChart,
+  Pie,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
+
 import Sidebar from '../components/Sidebar';
-// import axios from 'axios'; // descomentar cuando el back esté listo
 
 export default function Dashboard() {
-  const [sidebarAbierto, setSidebarAbierto] = useState(true);
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
 
-  // ── DATOS HARDCODEADOS — reemplazar cuando el back esté listo ────
-  const [metricasBack] = useState({
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const metricasBack = {
     ingresados: 64,
     resueltos: 55,
     noResueltos: 7,
     escalados: 2,
-  });
-  // ── CUANDO EL BACK ESTÉ LISTO, reemplazar el useState de arriba por esto:
-  //
-  // const [metricasBack, setMetricasBack] = useState({});
-  //
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   axios.get('URL_DEL_BACK/metricas', {
-  //     headers: { Authorization: `Bearer ${token}` }
-  //   })
-  //   .then(res => setMetricasBack(res.data))
-  //   .catch(err => console.error(err));
-  // }, []);
-  // ────────────────────────────────────────────────────────────────
+  };
 
   const metricas = [
-    { nombre: 'Ingresados', incidentes: metricasBack.ingresados, fill: '#2563A8' },
-    { nombre: 'Resueltos', incidentes: metricasBack.resueltos, fill: '#1D9E75' },
-    { nombre: 'No resueltos', incidentes: metricasBack.noResueltos, fill: '#BA7517' },
-    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A' },
+    {
+      nombre: 'Ingresados',
+      incidentes: metricasBack.ingresados,
+      fill: '#2563A8',
+    },
+    {
+      nombre: 'Resueltos',
+      incidentes: metricasBack.resueltos,
+      fill: '#1D9E75',
+    },
+    {
+      nombre: 'No resueltos',
+      incidentes: metricasBack.noResueltos,
+      fill: '#BA7517',
+    },
+    {
+      nombre: 'Escalados a 2do nivel',
+      incidentes: metricasBack.escalados,
+      fill: '#E24B4A',
+    },
   ];
 
   const distribucion = [
-    { nombre: 'Resueltos', incidentes: metricasBack.resueltos, fill: '#1D9E75' },
-    { nombre: 'No resueltos', incidentes: metricasBack.noResueltos, fill: '#BA7517' },
-    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A' },
+    {
+      nombre: 'Resueltos',
+      incidentes: metricasBack.resueltos,
+      fill: '#1D9E75',
+    },
+    {
+      nombre: 'No resueltos',
+      incidentes: metricasBack.noResueltos,
+      fill: '#BA7517',
+    },
+    {
+      nombre: 'Escalados a 2do nivel',
+      incidentes: metricasBack.escalados,
+      fill: '#E24B4A',
+    },
   ];
 
   return (
@@ -53,38 +86,86 @@ export default function Dashboard() {
           <div style={styles.pageTitle}>Dashboard</div>
         </div>
 
-        <div style={styles.content}>
-          <div style={styles.metricsGrid}>
+        <div
+          style={{
+            ...styles.content,
+            padding: isMobile ? '12px' : '20px 24px',
+          }}
+        >
+          <div
+            style={{
+              ...styles.metricsGrid,
+              gridTemplateColumns: isMobile
+                ? '1fr'
+                : 'repeat(4, 1fr)',
+            }}
+          >
             {metricas.map((item) => (
-              <div key={item.nombre} style={{ ...styles.metricCard, borderTop: `4px solid ${item.fill}` }}>
-                <div style={styles.metricLabel}>{item.nombre}</div>
-                <div style={{ ...styles.metricValue, color: item.fill }}>{item.incidentes}</div>
+              <div
+                key={item.nombre}
+                style={{
+                  ...styles.metricCard,
+                  borderTop: `4px solid ${item.fill}`,
+                  padding: isMobile ? '2px' : '20px 24px',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={styles.metricLabel}>
+                  {item.nombre}
+                </div>
+
+                <div
+                  style={{
+                    ...styles.metricValue,
+                    color: item.fill,
+                    fontSize: isMobile ? '22px' : '28px',
+                  }}
+                >
+                  {item.incidentes}
+                </div>
               </div>
             ))}
           </div>
 
           <div style={styles.chartCard}>
-            <div style={styles.chartTitle}>Distribución de tickets ingresados</div>
-            <ResponsiveContainer width="100%" height={320}>
-              <PieChart margin={{ top: 20, right: 60, bottom: 20, left: 60 }}>
+            <div style={styles.chartTitle}>
+              Distribución de tickets ingresados
+            </div>
+
+            <ResponsiveContainer width="100%" height={isMobile ? 160 : 320}>
+              <PieChart>
                 <Pie
+
                   data={distribucion}
                   dataKey="incidentes"
                   nameKey="nombre"
                   cx="50%"
                   cy="50%"
-                  outerRadius={110}
-                  animationBegin={300}
+                  outerRadius={isMobile ? 50 : 110}
+                  isAnimationActive={true}
+                  animationBegin={0}
                   animationDuration={1500}
-                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                  labelLine={true}
+                  animationEasing="ease-out"
+                  label={({ percent }) =>
+                    `${(percent * 100).toFixed(0)}%`
+                  }
                 >
                   {distribucion.map((entry, index) => (
-                    <Cell key={index} fill={entry.fill} />
+                    <Cell
+                      key={index}
+                      fill={entry.fill}
+                    />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value} tickets`, 'Cantidad']} />
-                <Legend />
+
+                <Tooltip
+                  formatter={(value) => [
+                    `${value} tickets`,
+                    'Cantidad',
+                  ]}
+                />
+
+                {!isMobile && <Legend />}
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -95,15 +176,73 @@ export default function Dashboard() {
 }
 
 const styles = {
-  screen: { display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif', background: '#f1f5f9' },
-  main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  topbar: { padding: '14px 24px', background: 'white', borderBottom: '1px solid #e2e8f0' },
-  pageTitle: { fontSize: '16px', fontWeight: '600', color: '#1A3A5C' },
-  content: { flex: 1, overflow: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' },
-  metricsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' },
-  metricCard: { background: 'white', borderRadius: '8px', padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  metricLabel: { fontSize: '12px', color: '#64748b', marginBottom: '6px' },
-  metricValue: { fontSize: '28px', fontWeight: '700' },
-  chartCard: { background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  chartTitle: { fontSize: '14px', fontWeight: '600', color: '#1A3A5C', marginBottom: '16px' },
+  screen: {
+    display: 'flex',
+    minHeight: '100vh',
+    fontFamily: 'Arial, sans-serif',
+    background: '#000',
+  },
+
+  main: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+
+  topbar: {
+    padding: '14px 24px',
+    background: 'white',
+    borderBottom: '1px solid #000',
+  },
+
+  pageTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1A3A5C',
+  },
+
+  content: {
+    flex: 1,
+    overflow: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+
+  metricsGrid: {
+    display: 'grid',
+    gap: '12px',
+  },
+
+  metricCard: {
+    background: 'white',
+    borderRadius: '8px',
+    padding: '16px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+  },
+
+  metricLabel: {
+    fontSize: '12px',
+    color: '#64748b',
+    marginBottom: '6px',
+  },
+
+  metricValue: {
+    fontWeight: '700',
+  },
+
+  chartCard: {
+    background: 'white',
+    borderRadius: '8px',
+    padding: '20px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+  },
+
+  chartTitle: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1A3A5C',
+    marginBottom: '16px',
+  },
 };

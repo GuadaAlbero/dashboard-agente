@@ -1,10 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import Sidebar from '../components/Sidebar';
 // import axios from 'axios'; // descomentar cuando el back esté listo
 
 export default function Dashboard() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // ── DATOS HARDCODEADOS — reemplazar cuando el back esté listo ────
   const [metricasBack] = useState({
@@ -53,27 +60,37 @@ export default function Dashboard() {
           <div style={styles.pageTitle}>Dashboard</div>
         </div>
 
-        <div style={styles.content}>
-          <div style={styles.metricsGrid}>
+        <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
+          <div style={{ ...styles.metricsGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)' }}>
             {metricas.map((item) => (
-              <div key={item.nombre} style={{ ...styles.metricCard, borderTop: `4px solid ${item.fill}` }}>
+              <div
+                key={item.nombre}
+                style={{
+                  ...styles.metricCard,
+                  borderTop: `4px solid ${item.fill}`,
+                  padding: isMobile ? '12px' : '16px',
+                  textAlign: isMobile ? 'center' : 'left',
+                }}
+              >
                 <div style={styles.metricLabel}>{item.nombre}</div>
-                <div style={{ ...styles.metricValue, color: item.fill }}>{item.incidentes}</div>
+                <div style={{ ...styles.metricValue, color: item.fill, fontSize: isMobile ? '22px' : '28px' }}>
+                  {item.incidentes}
+                </div>
               </div>
             ))}
           </div>
 
           <div style={styles.chartCard}>
             <div style={styles.chartTitle}>Distribución de tickets ingresados</div>
-            <ResponsiveContainer width="100%" height={320}>
-              <PieChart margin={{ top: 20, right: 60, bottom: 20, left: 60 }}>
+            <ResponsiveContainer width="100%" height={isMobile ? 160 : 320}>
+              <PieChart>
                 <Pie
                   data={distribucion}
                   dataKey="incidentes"
                   nameKey="nombre"
                   cx="50%"
                   cy="50%"
-                  outerRadius={110}
+                  outerRadius={isMobile ? 50 : 110}
                   animationBegin={300}
                   animationDuration={1500}
                   label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
@@ -84,7 +101,7 @@ export default function Dashboard() {
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => [`${value} tickets`, 'Cantidad']} />
-                <Legend />
+                {!isMobile && <Legend />}
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -97,7 +114,7 @@ export default function Dashboard() {
 const styles = {
   screen: {
     display: 'flex',
-    height: '100vh',
+    minHeight: '100vh',
     fontFamily: 'Arial, sans-serif',
     background: '#f1f5f9',
   },
@@ -120,14 +137,12 @@ const styles = {
   content: {
     flex: 1,
     overflow: 'auto',
-    padding: '20px 24px',
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
   },
   metricsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '12px',
   },
   metricCard: {

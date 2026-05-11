@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 // import axios from 'axios'; // descomentar cuando el back esté listo
 
 export default function Dashboard() {
-  const [sidebarAbierto, setSidebarAbierto] = useState(true);
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
 
   // ── DATOS HARDCODEADOS — reemplazar cuando el back esté listo ────
   const [metricasBack] = useState({
@@ -95,15 +95,66 @@ export default function Dashboard() {
 }
 
 const styles = {
-  screen: { display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif', background: '#f1f5f9' },
-  main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  topbar: { padding: '14px 24px', background: 'white', borderBottom: '1px solid #e2e8f0' },
-  pageTitle: { fontSize: '16px', fontWeight: '600', color: '#1A3A5C' },
-  content: { flex: 1, overflow: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' },
-  metricsGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' },
-  metricCard: { background: 'white', borderRadius: '8px', padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  metricLabel: { fontSize: '12px', color: '#64748b', marginBottom: '6px' },
-  metricValue: { fontSize: '28px', fontWeight: '700' },
-  chartCard: { background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  chartTitle: { fontSize: '14px', fontWeight: '600', color: '#1A3A5C', marginBottom: '16px' },
+  screen: {
+    display: 'flex',
+    height: '100vh',
+    fontFamily: 'Arial, sans-serif',
+    background: '#f1f5f9',
+  },
+  main: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  topbar: {
+    padding: '14px 24px',
+    background: 'white',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  pageTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1A3A5C',
+  },
+  content: {
+    flex: 1,
+    overflow: 'auto',
+    padding: '20px 24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  metricsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '12px',
+  },
+  metricCard: {
+    background: 'white',
+    borderRadius: '8px',
+    padding: '16px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+  },
+  metricLabel: {
+    fontSize: '12px',
+    color: '#64748b',
+    marginBottom: '6px',
+  },
+  metricValue: {
+    fontSize: '28px',
+    fontWeight: '700',
+  },
+  chartCard: {
+    background: 'white',
+    borderRadius: '8px',
+    padding: '20px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+  },
+  chartTitle: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1A3A5C',
+    marginBottom: '16px',
+  },
 };

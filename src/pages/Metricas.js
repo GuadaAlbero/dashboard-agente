@@ -40,7 +40,7 @@ const errorPorAgente = [
 // ────────────────────────────────────────────────────────────────
 
 export default function Metricas() {
-  const [sidebarAbierto, setSidebarAbierto] = useState(true);
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
 
   return (
     <div style={styles.screen}>
@@ -155,18 +155,82 @@ export default function Metricas() {
 }
 
 const styles = {
-  screen: { display: 'flex', height: '100vh', fontFamily: 'Arial, sans-serif', background: '#f1f5f9' },
-  main: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  topbar: { padding: '14px 24px', background: 'white', borderBottom: '1px solid #e2e8f0' },
-  pageTitle: { fontSize: '16px', fontWeight: '600', color: '#1A3A5C' },
-  content: { flex: 1, overflow: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' },
-  row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' },
-  chartCard: { background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  chartTitle: { fontSize: '14px', fontWeight: '600', color: '#1A3A5C', marginBottom: '16px' },
-  table: { width: '100%', borderCollapse: 'collapse', fontSize: '13px' },
-  th: { padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: '600', color: '#64748b', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' },
-  td: { padding: '10px 12px', borderBottom: '1px solid #f1f5f9', color: '#1A3A5C' },
-  trEven: { background: 'white' },
-  trOdd: { background: '#f8fafc' },
-  badge: { fontSize: '11px', padding: '3px 10px', borderRadius: '20px', fontWeight: '500' },
+  screen: {
+    display: 'flex',
+    height: '100vh',
+    fontFamily: 'Arial, sans-serif',
+    background: '#f1f5f9',
+  },
+  main: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  topbar: {
+    padding: '14px 24px',
+    background: 'white',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  pageTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1A3A5C',
+  },
+  content: {
+    flex: 1,
+    overflow: 'auto',
+    padding: '20px 24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  row2: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '16px',
+  },
+  chartCard: {
+    background: 'white',
+    borderRadius: '8px',
+    padding: '20px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+  },
+  chartTitle: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#1A3A5C',
+    marginBottom: '16px',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontSize: '13px',
+  },
+  th: {
+    padding: '10px 12px',
+    textAlign: 'left',
+    fontSize: '11px',
+    fontWeight: '600',
+    color: '#64748b',
+    background: '#f8fafc',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  td: {
+    padding: '10px 12px',
+    borderBottom: '1px solid #f1f5f9',
+    color: '#1A3A5C',
+  },
+  trEven: {
+    background: 'white',
+  },
+  trOdd: {
+    background: '#f8fafc',
+  },
+  badge: {
+    fontSize: '11px',
+    padding: '3px 10px',
+    borderRadius: '20px',
+    fontWeight: '500',
+  },
 };

@@ -30,7 +30,7 @@ export default function Sidebar({ paginaActiva, sidebarAbierto, setSidebarAbiert
           style={paginaActiva === 'metricas' ? styles.navItemActive : styles.navItem}
           onClick={() => navigate('/metricas')}
         >
-          {sidebarAbierto ? 'Métricas' : '📈'}
+          {sidebarAbierto ? 'Métricas' : <img src='metricas-icon.png' width={20} height={20} alt="" />}
         </div>
       </nav>
       <div style={styles.sidebarFooter}>

@@ -150,8 +150,8 @@ export default function Metricas() {
                         <td style={{ ...styles.td, textAlign: 'center' }}>
                           <span style={{
                             ...styles.badge,
-                            background: item.fallas >= 10 ? '#fef2f2' : item.fallas >= 6 ? '#fff7ed' : item.fallas >= 3 ? '#eff6ff' : '#f8fafc',
-                            color: item.fallas >= 10 ? '#E24B4A' : item.fallas >= 6 ? '#BA7517' : item.fallas >= 3 ? '#2563A8' : '#94a3b8',
+                            background: item.fallas >= 10 ? '#fef2f2' : item.fallas >= 6 ? '#fff7ed' : item.fallas >= 3 ? '#f0fdf4' : '#f8fafc',
+                            color: item.fallas >= 10 ? '#E24B4A' : item.fallas >= 6 ? '#BA7517' : item.fallas >= 3 ? '#1D9E75' : '#94a3b8',
                           }}>
                             {item.fallas >= 10 ? 'Alta' : item.fallas >= 6 ? 'Media' : item.fallas >= 3 ? 'Baja' : 'Sin prioridad'}
                           </span>

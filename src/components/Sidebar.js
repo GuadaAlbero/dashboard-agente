@@ -48,90 +48,90 @@ export default function Sidebar({ paginaActiva, sidebarAbierto, setSidebarAbiert
 
 const styles = {
   sidebar: {
-    background: 'white',
-    borderRight: '1px solid #e2e8f0',
+    background: '#0f172a',
+    borderRight: '1px solid #1e293b',
     display: 'flex',
     flexDirection: 'column',
     flexShrink: 0,
     transition: 'width 0.2s ease',
-    overflow: 'hidden'
+    overflow: 'hidden',
   },
   logoWrap: {
     padding: '12px 16px',
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid #1e293b',
     display: 'flex',
     alignItems: 'center',
-    gap: '10px'
+    gap: '10px',
   },
   hamburger: {
     background: 'none',
     border: 'none',
     fontSize: '18px',
     cursor: 'pointer',
-    color: '#1A3A5C',
-    flexShrink: 0
+    color: '#94a3b8',
+    flexShrink: 0,
   },
   logoName: {
     fontSize: '13px',
     fontWeight: '600',
-    color: '#1A3A5C',
-    whiteSpace: 'nowrap'
+    color: '#f1f5f9',
+    whiteSpace: 'nowrap',
   },
   logoSub: {
     fontSize: '11px',
     color: '#64748b',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
   },
   nav: {
     padding: '8px 0',
-    flex: 1
+    flex: 1,
   },
   navItem: {
     padding: '8px 16px',
     fontSize: '13px',
-    color: '#64748b',
+    color: '#94a3b8',
     cursor: 'pointer',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
   },
   navItemActive: {
     padding: '8px 16px',
     fontSize: '13px',
-    color: '#2563A8',
+    color: '#60a5fa',
     fontWeight: '600',
-    background: '#EEF4FB',
+    background: '#1e3a5f',
     cursor: 'pointer',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
   },
   sidebarFooter: {
     padding: '12px 16px',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid #1e293b',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px'
+    gap: '8px',
   },
   avatar: {
     width: '28px',
     height: '28px',
     borderRadius: '50%',
-    background: '#EEF4FB',
+    background: '#1e3a5f',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '11px',
     fontWeight: '600',
-    color: '#2563A8',
-    flexShrink: 0
+    color: '#60a5fa',
+    flexShrink: 0,
   },
   userName: {
     fontSize: '12px',
     fontWeight: '500',
-    color: '#1A3A5C',
-    whiteSpace: 'nowrap'
+    color: '#f1f5f9',
+    whiteSpace: 'nowrap',
   },
   logout: {
     fontSize: '11px',
     color: '#64748b',
     cursor: 'pointer',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
   },
 };

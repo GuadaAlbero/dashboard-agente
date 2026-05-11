@@ -154,9 +154,9 @@ function Login() {
 }
 
 const styles = {
-  screen: {
+ screen: {
     minHeight: '100vh',
-    background: '#f1f5f9',
+    background: '#1e293b',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',

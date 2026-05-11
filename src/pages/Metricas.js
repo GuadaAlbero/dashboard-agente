@@ -173,7 +173,7 @@ const styles = {
     display: 'flex',
     minHeight: '100vh',
     fontFamily: 'Arial, sans-serif',
-    background: '#f1f5f9',
+    background: '#1e293b',
   },
   main: {
     flex: 1,
@@ -183,13 +183,13 @@ const styles = {
   },
   topbar: {
     padding: '14px 24px',
-    background: 'white',
-    borderBottom: '1px solid #e2e8f0',
+    background: '#0f172a',
+    borderBottom: '1px solid #334155',
   },
   pageTitle: {
     fontSize: '16px',
     fontWeight: '600',
-    color: '#1A3A5C',
+    color: '#f1f5f9',
   },
   content: {
     flex: 1,
@@ -203,15 +203,15 @@ const styles = {
     gap: '16px',
   },
   chartCard: {
-    background: 'white',
+    background: '#0f172a',
     borderRadius: '8px',
     padding: '20px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
   },
   chartTitle: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#1A3A5C',
+    color: '#f1f5f9',
     marginBottom: '16px',
   },
   tableWrapper: {
@@ -228,20 +228,20 @@ const styles = {
     textAlign: 'left',
     fontSize: '11px',
     fontWeight: '600',
-    color: '#64748b',
-    background: '#f8fafc',
-    borderBottom: '1px solid #e2e8f0',
+    color: '#94a3b8',
+    background: '#1e293b',
+    borderBottom: '1px solid #334155',
   },
   td: {
     padding: '10px 12px',
-    borderBottom: '1px solid #f1f5f9',
-    color: '#1A3A5C',
+    borderBottom: '1px solid #1e293b',
+    color: '#e2e8f0',
   },
   trEven: {
-    background: 'white',
+    background: '#0f172a',
   },
   trOdd: {
-    background: '#f8fafc',
+    background: '#162032',
   },
   badge: {
     fontSize: '11px',

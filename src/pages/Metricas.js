@@ -81,7 +81,7 @@ export default function Metricas() {
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                   <XAxis type="number" label={{ value: 'Fallas', position: 'insideBottom', offset: -15 }} />
-                  <YAxis type="category" dataKey="modulo" width={isMobile ? 90 : 160} tick={{ fontSize: isMobile ? 9 : 11 }} />
+                  <YAxis type="category" dataKey="modulo" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11 }} />
                   <Tooltip formatter={(value) => [`${value} fallas`, 'Cantidad']} />
                   <Bar dataKey="fallas" radius={[0, 6, 6, 0]}>
                     {[...fallasPorModulo]
@@ -107,7 +107,7 @@ export default function Metricas() {
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                   <XAxis type="number" label={{ value: '%', position: 'insideBottom', offset: -15 }} />
-                  <YAxis type="category" dataKey="agente" width={isMobile ? 90 : 160} tick={{ fontSize: isMobile ? 9 : 11 }} />
+                  <YAxis type="category" dataKey="agente" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11 }} />
                   <Tooltip formatter={(value) => [`${value}%`, 'Tasa de error']} />
                   <Bar dataKey="tasa" radius={[0, 6, 6, 0]}>
                     {[...errorPorAgente]

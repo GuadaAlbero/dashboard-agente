@@ -55,6 +55,7 @@ const styles = {
     flexShrink: 0,
     transition: 'width 0.2s ease',
     overflow: 'hidden',
+    fontFamily: "'Poppins', sans-serif",
   },
   logoWrap: {
     padding: '12px 16px',
@@ -79,7 +80,7 @@ const styles = {
   },
   logoSub: {
     fontSize: '11px',
-    color: '#64748b',
+    color: '#94a3b8',
     whiteSpace: 'nowrap',
   },
   nav: {
@@ -130,7 +131,7 @@ const styles = {
   },
   logout: {
     fontSize: '11px',
-    color: '#64748b',
+    color: '#94a3b8',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   },

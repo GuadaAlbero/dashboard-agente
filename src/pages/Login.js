@@ -154,20 +154,21 @@ function Login() {
 }
 
 const styles = {
- screen: {
+  screen: {
     minHeight: '100vh',
     background: '#1e293b',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    fontFamily: "'Poppins', sans-serif",
   },
   card: {
-    background: 'white',
+    background: '#0f172a',
     borderRadius: '12px',
     padding: '32px',
     width: '100%',
     maxWidth: '360px',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
   },
   logo: {
     textAlign: 'center',
@@ -176,29 +177,29 @@ const styles = {
   logoName: {
     fontSize: '20px',
     fontWeight: '600',
-    color: '#1A3A5C',
+    color: '#f1f5f9',
   },
   logoSub: {
     fontSize: '13px',
-    color: '#64748b',
+    color: '#94a3b8',
     marginTop: '4px',
   },
   divider: {
     border: 'none',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid #1e293b',
     marginBottom: '20px',
   },
   error: {
-    background: '#fef2f2',
-    color: '#dc2626',
+    background: '#2d1515',
+    color: '#f87171',
     fontSize: '13px',
     padding: '10px 12px',
     borderRadius: '8px',
     marginBottom: '16px',
   },
   info: {
-    background: '#eff6ff',
-    color: '#2563A8',
+    background: '#0f2744',
+    color: '#60a5fa',
     fontSize: '13px',
     padding: '10px 12px',
     borderRadius: '8px',
@@ -210,7 +211,7 @@ const styles = {
   label: {
     display: 'block',
     fontSize: '13px',
-    color: '#64748b',
+    color: '#94a3b8',
     marginBottom: '6px',
   },
   input: {
@@ -218,14 +219,17 @@ const styles = {
     fontSize: '13px',
     padding: '9px 12px',
     borderRadius: '8px',
-    border: '1px solid #e2e8f0',
+    border: '1px solid #334155',
     boxSizing: 'border-box',
     outline: 'none',
+    background: '#1e293b',
+    color: '#f1f5f9',
+    fontFamily: "'Poppins', sans-serif",
   },
   btn: {
     width: '100%',
     padding: '11px',
-    background: '#1A3A5C',
+    background: '#2563eb',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
@@ -233,18 +237,17 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     marginTop: '4px',
+    fontFamily: "'Poppins', sans-serif",
   },
   toggle: {
     textAlign: 'center',
     fontSize: '13px',
-    color: '#64748b',
+    color: '#94a3b8',
     marginTop: '16px',
   },
   link: {
-    color: '#2563A8',
+    color: '#60a5fa',
     cursor: 'pointer',
     fontWeight: '500',
   },
 };
-
-export default Login;

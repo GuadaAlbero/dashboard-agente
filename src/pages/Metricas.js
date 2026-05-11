@@ -128,9 +128,9 @@ export default function Metricas() {
                 <thead>
                   <tr>
                     <th style={styles.th}>Módulo</th>
-                    <th style={styles.th}>Fallas</th>
-                    <th style={styles.th}>% del total</th>
-                    <th style={styles.th}>Prioridad</th>
+                    <th style={{ ...styles.th, textAlign: 'center' }}>Fallas</th>
+                    <th style={{ ...styles.th, textAlign: 'center' }}>Representación</th>
+                    <th style={{ ...styles.th, textAlign: 'center' }}>Prioridad</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -141,13 +141,13 @@ export default function Metricas() {
                         <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
                           {item.modulo}
                         </td>
-                        <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
+                        <td style={{ ...styles.td, textAlign: 'center', color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
                           {item.fallas}
                         </td>
-                        <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
+                        <td style={{ ...styles.td, textAlign: 'center', color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
                           {((item.fallas / totalIncidentes) * 100).toFixed(1)}%
                         </td>
-                        <td style={styles.td}>
+                        <td style={{ ...styles.td, textAlign: 'center' }}>
                           <span style={{
                             ...styles.badge,
                             background: item.fallas >= 10 ? '#fef2f2' : item.fallas >= 6 ? '#fff7ed' : item.fallas >= 3 ? '#eff6ff' : '#f8fafc',

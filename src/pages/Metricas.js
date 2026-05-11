@@ -80,8 +80,8 @@ export default function Metricas() {
                   margin={{ top: 0, right: isMobile ? 10 : 30, left: 10, bottom: 25 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" label={{ value: 'Fallas', position: 'insideBottom', offset: -15 }} tick={{ fill: '#94a3b8' }} />
-                  <YAxis type="category" dataKey="modulo" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#94a3b8' }} />
+                  <XAxis type="number" label={{ value: 'Fallas', position: 'insideBottom', offset: -15 }} tick={{ fill: '#64748b' }} />
+                  <YAxis type="category" dataKey="modulo" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#64748b' }} />
                   <Tooltip formatter={(value) => [`${value} fallas`, 'Cantidad']} />
                   <Bar dataKey="fallas" radius={[0, 6, 6, 0]}>
                     {[...fallasPorModulo]
@@ -106,8 +106,8 @@ export default function Metricas() {
                   margin={{ top: 0, right: isMobile ? 10 : 30, left: 10, bottom: 25 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" label={{ value: '%', position: 'insideBottom', offset: -15 }} tick={{ fill: '#94a3b8' }} />
-                  <YAxis type="category" dataKey="agente" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#94a3b8' }} />
+                  <XAxis type="number" label={{ value: '%', position: 'insideBottom', offset: -15 }} tick={{ fill: '#64748b' }} />
+                  <YAxis type="category" dataKey="agente" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#64748b' }} />
                   <Tooltip formatter={(value) => [`${value}%`, 'Tasa de error']} />
                   <Bar dataKey="tasa" radius={[0, 6, 6, 0]}>
                     {[...errorPorAgente]
@@ -138,19 +138,19 @@ export default function Metricas() {
                     .sort((a, b) => b.fallas - a.fallas)
                     .map((item, index) => (
                       <tr key={index} style={index % 2 === 0 ? styles.trEven : styles.trOdd}>
-                        <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#e2e8f0' }}>
+                        <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
                           {item.modulo}
                         </td>
-                        <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#e2e8f0' }}>
+                        <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
                           {item.fallas}
                         </td>
-                        <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#e2e8f0' }}>
+                        <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
                           {((item.fallas / totalIncidentes) * 100).toFixed(1)}%
                         </td>
                         <td style={styles.td}>
                           <span style={{
                             ...styles.badge,
-                            background: item.fallas >= 10 ? '#fef2f2' : item.fallas >= 6 ? '#fff7ed' : item.fallas >= 3 ? '#eff6ff' : '#1e293b',
+                            background: item.fallas >= 10 ? '#fef2f2' : item.fallas >= 6 ? '#fff7ed' : item.fallas >= 3 ? '#eff6ff' : '#f8fafc',
                             color: item.fallas >= 10 ? '#E24B4A' : item.fallas >= 6 ? '#BA7517' : item.fallas >= 3 ? '#2563A8' : '#94a3b8',
                           }}>
                             {item.fallas >= 10 ? 'Alta' : item.fallas >= 6 ? 'Media' : item.fallas >= 3 ? 'Baja' : 'Sin prioridad'}
@@ -173,7 +173,7 @@ const styles = {
     display: 'flex',
     minHeight: '100vh',
     fontFamily: "'Poppins', sans-serif",
-    background: '#1e293b',
+    background: '#f1f5f9',
   },
   main: {
     flex: 1,
@@ -183,13 +183,13 @@ const styles = {
   },
   topbar: {
     padding: '14px 24px',
-    background: '#0f172a',
-    borderBottom: '1px solid #334155',
+    background: 'white',
+    borderBottom: '1px solid #e2e8f0',
   },
   pageTitle: {
     fontSize: '16px',
     fontWeight: '600',
-    color: '#f1f5f9',
+    color: '#1A3A5C',
   },
   content: {
     flex: 1,
@@ -203,15 +203,15 @@ const styles = {
     gap: '16px',
   },
   chartCard: {
-    background: '#0f172a',
+    background: 'white',
     borderRadius: '8px',
     padding: '20px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
   chartTitle: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#f1f5f9',
+    color: '#1A3A5C',
     marginBottom: '16px',
   },
   tableWrapper: {
@@ -228,20 +228,20 @@ const styles = {
     textAlign: 'left',
     fontSize: '11px',
     fontWeight: '600',
-    color: '#94a3b8',
-    background: '#1e293b',
-    borderBottom: '1px solid #334155',
+    color: '#64748b',
+    background: '#f8fafc',
+    borderBottom: '1px solid #e2e8f0',
   },
   td: {
     padding: '10px 12px',
-    borderBottom: '1px solid #334155',
-    color: '#e2e8f0',
+    borderBottom: '1px solid #f1f5f9',
+    color: '#1A3A5C',
   },
   trEven: {
-    background: '#0f172a',
+    background: 'white',
   },
   trOdd: {
-    background: '#162032',
+    background: '#f8fafc',
   },
   badge: {
     fontSize: '11px',

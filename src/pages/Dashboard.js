@@ -115,8 +115,8 @@ const styles = {
   screen: {
     display: 'flex',
     minHeight: '100vh',
-    fontFamily: 'Arial, sans-serif',
-    background: '#1e293b',
+    fontFamily: "'Poppins', sans-serif",
+    background: '#f1f5f9',
   },
   main: {
     flex: 1,
@@ -126,13 +126,13 @@ const styles = {
   },
   topbar: {
     padding: '14px 24px',
-    background: '#0f172a',
-    borderBottom: '1px solid #334155',
+    background: 'white',
+    borderBottom: '1px solid #e2e8f0',
   },
   pageTitle: {
     fontSize: '16px',
     fontWeight: '600',
-    color: '#f1f5f9',
+    color: '#1A3A5C',
   },
   content: {
     flex: 1,
@@ -146,14 +146,14 @@ const styles = {
     gap: '12px',
   },
   metricCard: {
-    background: '#0f172a',
+    background: 'white',
     borderRadius: '8px',
     padding: '16px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
   metricLabel: {
     fontSize: '12px',
-    color: '#94a3b8',
+    color: '#64748b',
     marginBottom: '6px',
   },
   metricValue: {
@@ -161,15 +161,15 @@ const styles = {
     fontWeight: '700',
   },
   chartCard: {
-    background: '#0f172a',
+    background: 'white',
     borderRadius: '8px',
     padding: '20px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
   chartTitle: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#f1f5f9',
+    color: '#1A3A5C',
     marginBottom: '16px',
   },
 };

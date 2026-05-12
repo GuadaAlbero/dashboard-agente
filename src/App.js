@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Metricas from './pages/Metricas';
+import Tickets from './pages/Tickets';
 
 function RutaProtegida({ children }) {
   const token = localStorage.getItem('accessToken');
@@ -28,6 +29,14 @@ function App() {
           element={
             <RutaProtegida>
               <Metricas />
+            </RutaProtegida>
+          }
+        />
+        <Route
+          path="/tickets"
+          element={
+            <RutaProtegida>
+              <Tickets />
             </RutaProtegida>
           }
         />

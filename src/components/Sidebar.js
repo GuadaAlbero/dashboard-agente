@@ -27,6 +27,12 @@ export default function Sidebar({ paginaActiva, sidebarAbierto, setSidebarAbiert
           {sidebarAbierto ? 'Dashboard' : <img src='dashboard-icon.png' width={20} height={20} alt="" />}
         </div>
         <div
+          style={paginaActiva === 'tickets' ? styles.navItemActive : styles.navItem}
+          onClick={() => navigate('/tickets')}
+        >
+          {sidebarAbierto ? 'Tickets' : '🎫'}
+        </div>
+        <div
           style={paginaActiva === 'metricas' ? styles.navItemActive : styles.navItem}
           onClick={() => navigate('/metricas')}
         >

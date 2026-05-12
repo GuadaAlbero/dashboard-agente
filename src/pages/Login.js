@@ -63,7 +63,7 @@ function Login() {
         return;
       }
       const response = await axios.post(`${URL_BACK}/auth/sign-in`, { email, password });
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('accessToken', response.data.accessToken);
       navigate('/dashboard');
     } catch (err) {
       setError('Email o contraseña incorrectos.');

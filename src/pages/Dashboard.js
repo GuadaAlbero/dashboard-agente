@@ -3,6 +3,8 @@ import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer, Cell } from 'recha
 import Sidebar from '../components/Sidebar';
 // import axios from 'axios'; // descomentar cuando el back esté listo
 
+// const URL_BACK = process.env.REACT_APP_API_URL || '/api'; // descomentar cuando el back esté listo
+
 export default function Dashboard() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -25,8 +27,8 @@ export default function Dashboard() {
   // const [metricasBack, setMetricasBack] = useState({});
   //
   // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   axios.get('URL_DEL_BACK/metricas', {
+  //   const token = localStorage.getItem('accessToken');
+  //   axios.get(`${URL_BACK}/metricas`, {
   //     headers: { Authorization: `Bearer ${token}` }
   //   })
   //   .then(res => setMetricasBack(res.data))

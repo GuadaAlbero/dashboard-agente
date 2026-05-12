@@ -32,7 +32,7 @@ const totalIncidentes = 64;
 // const [totalIncidentes, setTotalIncidentes] = useState(0);
 //
 // useEffect(() => {
-//   const token = localStorage.getItem('token');
+//   const token = localStorage.getItem('accessToken');
 //   axios.get('URL_DEL_BACK/metricas/calidad', {
 //     headers: { Authorization: `Bearer ${token}` }
 //   })

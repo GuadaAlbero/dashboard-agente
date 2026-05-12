@@ -4,7 +4,7 @@ export default function Sidebar({ paginaActiva, sidebarAbierto, setSidebarAbiert
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
     navigate('/login');
   };
 

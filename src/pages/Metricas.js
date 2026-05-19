@@ -3,6 +3,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Cartes
 import Sidebar from '../components/Sidebar';
 // import axios from 'axios'; // descomentar cuando el back esté listo
 
+// const URL_BACK = process.env.REACT_APP_API_URL || '/api'; // descomentar cuando el back esté listo
+
 // ── DATOS HARDCODEADOS — BORRAR cuando el back esté listo ────────
 const fallasPorModulo = [
   { modulo: 'Cambio de horario', fallas: 12 },

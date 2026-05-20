@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 // import axios from 'axios'; // descomentar cuando el back esté listo
 
@@ -60,12 +61,25 @@ export default function Tickets() {
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
   const [orden, setOrden] = useState({ columna: 'openedAt', direccion: 'desc' });
+  const [filaExpandida, setFilaExpandida] = useState(null);
+  const [bottomSheetAbierto, setBottomSheetAbierto] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const estado = params.get('estado');
+    if (estado === 'noResueltos') {
+      setFiltroEstado('noResueltos');
+    } else if (estado) {
+      setFiltroEstado(estado);
+    }
+  }, [location.search]);
 
   const limpiarFiltros = () => {
     setFiltroEstado('Todos');
@@ -87,9 +101,17 @@ export default function Tickets() {
     return orden.direccion === 'asc' ? ' ↑' : ' ↓';
   };
 
+  const toggleFila = (id) => {
+    setFilaExpandida(prev => prev === id ? null : id);
+  };
+
   const ticketsFiltrados = tickets
     .filter(t => {
-      if (filtroEstado !== 'Todos' && t.stateLabel !== filtroEstado) return false;
+      if (filtroEstado === 'noResueltos') {
+        if (!['Nuevo', 'En progreso', 'En espera'].includes(t.stateLabel)) return false;
+      } else if (filtroEstado !== 'Todos' && t.stateLabel !== filtroEstado) {
+        return false;
+      }
       if (filtroPrioridad !== 'Todas' && t.priorityLabel !== filtroPrioridad) return false;
       if (filtroFechaDesde && new Date(t.openedAt) < new Date(filtroFechaDesde)) return false;
       if (filtroFechaHasta && new Date(t.openedAt) > new Date(filtroFechaHasta + 'T23:59:59')) return false;
@@ -98,7 +120,6 @@ export default function Tickets() {
     .sort((a, b) => {
       const { columna, direccion } = orden;
       let valA, valB;
-
       if (columna === 'priorityLabel') {
         valA = pesoPrioridad[a.priorityLabel] ?? 99;
         valB = pesoPrioridad[b.priorityLabel] ?? 99;
@@ -112,13 +133,45 @@ export default function Tickets() {
         valA = a[columna]?.toLowerCase?.() ?? '';
         valB = b[columna]?.toLowerCase?.() ?? '';
       }
-
       if (valA < valB) return direccion === 'asc' ? -1 : 1;
       if (valA > valB) return direccion === 'asc' ? 1 : -1;
       return 0;
     });
 
   const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroFechaDesde || filtroFechaHasta;
+  const labelFiltroEstado = filtroEstado === 'noResueltos' ? 'No resueltos' : filtroEstado;
+  const cantFiltrosActivos = [filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', !!filtroFechaDesde, !!filtroFechaHasta].filter(Boolean).length;
+
+  const filtrosJSX = (
+    <>
+      <div style={styles.filtroGrupo}>
+        <label style={styles.filtroLabel}>Estado</label>
+        <select style={styles.select} value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
+          {ESTADOS.map(e => <option key={e}>{e}</option>)}
+          <option value="noResueltos">No resueltos</option>
+        </select>
+      </div>
+      <div style={styles.filtroGrupo}>
+        <label style={styles.filtroLabel}>Prioridad</label>
+        <select style={styles.select} value={filtroPrioridad} onChange={e => setFiltroPrioridad(e.target.value)}>
+          {PRIORIDADES.map(p => <option key={p}>{p}</option>)}
+        </select>
+      </div>
+      <div style={styles.filtroGrupo}>
+        <label style={styles.filtroLabel}>Desde</label>
+        <input style={styles.inputFecha} type="date" value={filtroFechaDesde} onChange={e => setFiltroFechaDesde(e.target.value)} />
+      </div>
+      <div style={styles.filtroGrupo}>
+        <label style={styles.filtroLabel}>Hasta</label>
+        <input style={styles.inputFecha} type="date" value={filtroFechaHasta} onChange={e => setFiltroFechaHasta(e.target.value)} />
+      </div>
+      {hayFiltrosActivos && (
+        <button style={styles.btnLimpiar} onClick={limpiarFiltros}>Limpiar filtros</button>
+      )}
+    </>
+  );
+
+  const tdPadding = isMobile ? '6px 6px' : '10px 12px';
 
   return (
     <div style={styles.screen}>
@@ -131,94 +184,127 @@ export default function Tickets() {
       <div style={styles.main}>
         <div style={styles.topbar}>
           <div style={styles.pageTitle}>Incidentes</div>
+          {isMobile && (
+            <button style={styles.btnFiltrosMobile} onClick={() => setBottomSheetAbierto(true)}>
+               Filtros {cantFiltrosActivos > 0 && <span style={styles.badgeFiltros}>{cantFiltrosActivos}</span>}
+            </button>
+          )}
         </div>
 
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
-          <div style={styles.filtrosCard}>
-            <div style={{ ...styles.filtrosRow, flexDirection: isMobile ? 'column' : 'row' }}>
-              <div style={styles.filtroGrupo}>
-                <label style={styles.filtroLabel}>Estado</label>
-                <select style={styles.select} value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
-                  {ESTADOS.map(e => <option key={e}>{e}</option>)}
-                </select>
+          {!isMobile && (
+            <div style={styles.filtrosCard}>
+              <div style={{ ...styles.filtrosRow, flexDirection: 'row' }}>
+                {filtrosJSX}
               </div>
-              <div style={styles.filtroGrupo}>
-                <label style={styles.filtroLabel}>Prioridad</label>
-                <select style={styles.select} value={filtroPrioridad} onChange={e => setFiltroPrioridad(e.target.value)}>
-                  {PRIORIDADES.map(p => <option key={p}>{p}</option>)}
-                </select>
-              </div>
-              <div style={styles.filtroGrupo}>
-                <label style={styles.filtroLabel}>Desde</label>
-                <input style={styles.inputFecha} type="date" value={filtroFechaDesde} onChange={e => setFiltroFechaDesde(e.target.value)} />
-              </div>
-              <div style={styles.filtroGrupo}>
-                <label style={styles.filtroLabel}>Hasta</label>
-                <input style={styles.inputFecha} type="date" value={filtroFechaHasta} onChange={e => setFiltroFechaHasta(e.target.value)} />
-              </div>
-              {hayFiltrosActivos && (
-                <button style={styles.btnLimpiar} onClick={limpiarFiltros}>Limpiar filtros</button>
-              )}
             </div>
-          </div>
+          )}
 
           <div style={styles.tableCard}>
             <div style={styles.tableInfo}>
               Mostrando {ticketsFiltrados.length} de {tickets.length} incidentes
+              {filtroEstado !== 'Todos' && <span style={{ color: '#2563A8', marginLeft: '8px' }}>— {labelFiltroEstado}</span>}
             </div>
             <div style={styles.tableWrapper}>
               <table style={styles.table}>
                 <thead>
                   <tr>
-                    <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => toggleOrden('number')}>
+                    {isMobile && <th style={{ ...styles.th, width: '20px', padding: '6px 4px' }}></th>}
+                    <th style={{ ...styles.th, cursor: 'pointer', padding: tdPadding }} onClick={() => toggleOrden('number')}>
                       Número{flechaOrden('number')}
                     </th>
-                    <th style={{ ...styles.th, cursor: 'pointer' }} onClick={() => toggleOrden('title')}>
+                    <th style={{ ...styles.th, cursor: 'pointer', padding: tdPadding }} onClick={() => toggleOrden('title')}>
                       Título{flechaOrden('title')}
                     </th>
-                    <th style={{ ...styles.th, textAlign: 'center', cursor: 'pointer' }} onClick={() => toggleOrden('stateLabel')}>
+                    <th style={{ ...styles.th, textAlign: 'center', cursor: 'pointer', padding: tdPadding }} onClick={() => toggleOrden('stateLabel')}>
                       Estado{flechaOrden('stateLabel')}
                     </th>
-                    <th style={{ ...styles.th, textAlign: 'center', cursor: 'pointer' }} onClick={() => toggleOrden('priorityLabel')}>
+                    <th style={{ ...styles.th, textAlign: 'center', cursor: 'pointer', padding: tdPadding }} onClick={() => toggleOrden('priorityLabel')}>
                       Prioridad{flechaOrden('priorityLabel')}
                     </th>
-                    <th style={{ ...styles.th, textAlign: 'center', cursor: 'pointer' }} onClick={() => toggleOrden('openedAt')}>
-                      Abierto{flechaOrden('openedAt')}
-                    </th>
-                    <th style={{ ...styles.th, textAlign: 'center', cursor: 'pointer' }} onClick={() => toggleOrden('updatedAt')}>
-                      Actualizado{flechaOrden('updatedAt')}
-                    </th>
+                    {!isMobile && (
+                      <>
+                        <th style={{ ...styles.th, textAlign: 'center', cursor: 'pointer' }} onClick={() => toggleOrden('openedAt')}>
+                          Abierto{flechaOrden('openedAt')}
+                        </th>
+                        <th style={{ ...styles.th, textAlign: 'center', cursor: 'pointer' }} onClick={() => toggleOrden('updatedAt')}>
+                          Actualizado{flechaOrden('updatedAt')}
+                        </th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
                   {ticketsFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ ...styles.td, textAlign: 'center', color: '#94a3b8', padding: '32px' }}>
+                      <td colSpan={isMobile ? 5 : 6} style={{ ...styles.td, textAlign: 'center', color: '#94a3b8', padding: '32px' }}>
                         No hay incidentes que coincidan con los filtros.
                       </td>
                     </tr>
                   ) : (
                     ticketsFiltrados.map((ticket, index) => (
-                      <tr key={ticket.id} style={index % 2 === 0 ? styles.trEven : styles.trOdd}>
-                        <td style={{ ...styles.td, fontWeight: '600', color: '#1A3A5C' }}>{ticket.number}</td>
-                        <td style={styles.td}>{ticket.title}</td>
-                        <td style={{ ...styles.td, textAlign: 'center' }}>
-                          <span style={{ ...styles.badge, background: colorEstado[ticket.stateLabel]?.bg || '#f8fafc', color: colorEstado[ticket.stateLabel]?.color || '#64748b' }}>
-                            {ticket.stateLabel}
-                          </span>
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center' }}>
-                          <span style={{ ...styles.badge, background: colorPrioridad[ticket.priorityLabel]?.bg || '#f8fafc', color: colorPrioridad[ticket.priorityLabel]?.color || '#64748b' }}>
-                            {ticket.priorityLabel}
-                          </span>
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
-                          {new Date(ticket.openedAt).toLocaleDateString('es-AR')}
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
-                          {new Date(ticket.updatedAt).toLocaleDateString('es-AR')}
-                        </td>
-                      </tr>
+                      <>
+                        <tr
+                          key={ticket.id}
+                          style={index % 2 === 0 ? styles.trEven : styles.trOdd}
+                          onClick={() => isMobile && toggleFila(ticket.id)}
+                        >
+                          {isMobile && (
+                            <td style={{ ...styles.td, width: '20px', padding: '6px 4px', color: '#94a3b8', fontSize: '9px' }}>
+                              {filaExpandida === ticket.id ? '▲' : '▼'}
+                            </td>
+                          )}
+                          <td style={{ ...styles.td, padding: tdPadding, fontWeight: '600' }}>
+                            {isMobile
+                              ? <span style={{ fontSize: '11px', color: '#94a3b8' }}>#{ticket.number.slice(-5)}</span>
+                              : <span style={{ color: '#1A3A5C' }}>{ticket.number}</span>
+                            }
+                          </td>
+                          <td style={{ ...styles.td, padding: tdPadding, fontSize: isMobile ? '12px' : '13px' }}>{ticket.title}</td>
+                          <td style={{ ...styles.td, padding: tdPadding, textAlign: 'center' }}>
+                            <span style={{
+                              ...styles.badge,
+                              fontSize: isMobile ? '10px' : '11px',
+                              padding: isMobile ? '2px 6px' : '3px 10px',
+                              background: colorEstado[ticket.stateLabel]?.bg || '#f8fafc',
+                              color: colorEstado[ticket.stateLabel]?.color || '#64748b'
+                            }}>
+                              {ticket.stateLabel}
+                            </span>
+                          </td>
+                          <td style={{ ...styles.td, padding: tdPadding, textAlign: 'center' }}>
+                            <span style={{
+                              ...styles.badge,
+                              fontSize: isMobile ? '10px' : '11px',
+                              padding: isMobile ? '2px 6px' : '3px 10px',
+                              background: colorPrioridad[ticket.priorityLabel]?.bg || '#f8fafc',
+                              color: colorPrioridad[ticket.priorityLabel]?.color || '#64748b'
+                            }}>
+                              {ticket.priorityLabel}
+                            </span>
+                          </td>
+                          {!isMobile && (
+                            <>
+                              <td style={{ ...styles.td, textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+                                {new Date(ticket.openedAt).toLocaleDateString('es-AR')}
+                              </td>
+                              <td style={{ ...styles.td, textAlign: 'center', color: '#64748b', fontSize: '12px' }}>
+                                {new Date(ticket.updatedAt).toLocaleDateString('es-AR')}
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                        {isMobile && filaExpandida === ticket.id && (
+                          <tr key={`${ticket.id}-detalle`} style={{ background: '#f8fafc' }}>
+                            <td colSpan={5} style={{ padding: '6px 12px 10px 30px' }}>
+                              <div style={{ fontSize: '11px', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                <span><strong>Abierto:</strong> {new Date(ticket.openedAt).toLocaleDateString('es-AR')}</span>
+                                <span><strong>Actualizado:</strong> {new Date(ticket.updatedAt).toLocaleDateString('es-AR')}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     ))
                   )}
                 </tbody>
@@ -227,6 +313,30 @@ export default function Tickets() {
           </div>
         </div>
       </div>
+
+      {isMobile && (
+        <>
+          {bottomSheetAbierto && (
+            <div style={styles.overlay} onClick={() => setBottomSheetAbierto(false)} />
+          )}
+          <div style={{
+            ...styles.bottomSheet,
+            transform: bottomSheetAbierto ? 'translateY(0)' : 'translateY(100%)',
+          }}>
+            <div style={styles.bottomSheetHandle} />
+            <div style={styles.bottomSheetHeader}>
+              <span style={styles.bottomSheetTitle}>Filtros</span>
+              <button style={styles.btnCerrarSheet} onClick={() => setBottomSheetAbierto(false)}>✕</button>
+            </div>
+            <div style={styles.bottomSheetBody}>
+              {filtrosJSX}
+            </div>
+            <button style={styles.btnAplicar} onClick={() => setBottomSheetAbierto(false)}>
+              Ver {ticketsFiltrados.length} incidentes
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -248,11 +358,40 @@ const styles = {
     padding: '14px 24px',
     background: 'white',
     borderBottom: '1px solid #e2e8f0',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   pageTitle: {
     fontSize: '16px',
     fontWeight: '600',
     color: '#1A3A5C',
+  },
+  btnFiltrosMobile: {
+    fontSize: '13px',
+    padding: '6px 14px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    background: 'white',
+    color: '#1A3A5C',
+    fontWeight: '500',
+    cursor: 'pointer',
+    fontFamily: "'Poppins', sans-serif",
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  badgeFiltros: {
+    background: '#2563A8',
+    color: 'white',
+    borderRadius: '50%',
+    width: '18px',
+    height: '18px',
+    fontSize: '11px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -331,7 +470,6 @@ const styles = {
   },
   table: {
     width: '100%',
-    minWidth: '600px',
     borderCollapse: 'collapse',
     fontSize: '13px',
   },
@@ -362,5 +500,68 @@ const styles = {
     borderRadius: '20px',
     fontWeight: '500',
     whiteSpace: 'nowrap',
+  },
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.4)',
+    zIndex: 200,
+  },
+  bottomSheet: {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: 'white',
+    borderRadius: '16px 16px 0 0',
+    padding: '0 20px 32px',
+    zIndex: 201,
+    transition: 'transform 0.3s ease',
+    boxShadow: '0 -4px 24px rgba(0,0,0,0.12)',
+  },
+  bottomSheetHandle: {
+    width: '40px',
+    height: '4px',
+    background: '#e2e8f0',
+    borderRadius: '2px',
+    margin: '12px auto 0',
+  },
+  bottomSheetHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '16px 0 12px',
+    borderBottom: '1px solid #e2e8f0',
+    marginBottom: '16px',
+  },
+  bottomSheetTitle: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#1A3A5C',
+  },
+  btnCerrarSheet: {
+    background: 'none',
+    border: 'none',
+    fontSize: '16px',
+    cursor: 'pointer',
+    color: '#64748b',
+  },
+  bottomSheetBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  btnAplicar: {
+    width: '100%',
+    padding: '12px',
+    background: '#1A3A5C',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    fontFamily: "'Poppins', sans-serif",
+    marginTop: '20px',
   },
 };

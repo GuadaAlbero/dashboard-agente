@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 // import axios from 'axios'; // descomentar cuando el back esté listo
 
@@ -8,6 +9,7 @@ import Sidebar from '../components/Sidebar';
 export default function Dashboard() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -37,10 +39,10 @@ export default function Dashboard() {
   // ────────────────────────────────────────────────────────────────
 
   const metricas = [
-    { nombre: 'Ingresados', incidentes: metricasBack.ingresados, fill: '#2563A8' },
-    { nombre: 'Resueltos', incidentes: metricasBack.resueltos, fill: '#1D9E75' },
-    { nombre: 'No resueltos', incidentes: metricasBack.noResueltos, fill: '#BA7517' },
-    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A' },
+    { nombre: 'Ingresados', incidentes: metricasBack.ingresados, fill: '#2563A8', filtro: null },
+    { nombre: 'Resueltos', incidentes: metricasBack.resueltos, fill: '#1D9E75', filtro: 'Resuelto' },
+    { nombre: 'No resueltos', incidentes: metricasBack.noResueltos, fill: '#BA7517', filtro: 'noResueltos' },
+    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A', filtro: null },
   ];
 
   const distribucion = [
@@ -48,6 +50,14 @@ export default function Dashboard() {
     { nombre: 'No resueltos', incidentes: metricasBack.noResueltos, fill: '#BA7517' },
     { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A' },
   ];
+
+  const handleCardClick = (item) => {
+    if (item.filtro) {
+      navigate(`/tickets?estado=${item.filtro}`);
+    } else {
+      navigate('/tickets');
+    }
+  };
 
   return (
     <div style={styles.screen}>
@@ -67,11 +77,13 @@ export default function Dashboard() {
             {metricas.map((item) => (
               <div
                 key={item.nombre}
+                onClick={() => handleCardClick(item)}
                 style={{
                   ...styles.metricCard,
                   borderTop: `4px solid ${item.fill}`,
                   padding: isMobile ? '12px' : '16px',
                   textAlign: isMobile ? 'center' : 'left',
+                  cursor: 'pointer',
                 }}
               >
                 <div style={styles.metricLabel}>{item.nombre}</div>
@@ -152,6 +164,7 @@ const styles = {
     borderRadius: '8px',
     padding: '16px',
     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    transition: 'box-shadow 0.2s',
   },
   metricLabel: {
     fontSize: '12px',

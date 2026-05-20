@@ -21,27 +21,21 @@ const errorPorAgente = [
   { agente: 'Agente Enrutador', tasa: 4 },
   { agente: 'Agente Entrada', tasa: 2 },
 ];
-
-// ── HARDCODEADO — reemplazar por res.data.totalIncidentes cuando el back esté listo ──
-const totalIncidentes = 64;
-
 // ── CUANDO EL BACK ESTÉ LISTO: ───────────────────────────────────
-// 1. Borrar las tres constantes de arriba
+// 1. Borrar las constantes de arriba
 // 2. Descomentar esto:
 //
 // const [fallasPorModulo, setFallasPorModulo] = useState([]);
 // const [errorPorAgente, setErrorPorAgente] = useState([]);
-// const [totalIncidentes, setTotalIncidentes] = useState(0);
 //
 // useEffect(() => {
 //   const token = localStorage.getItem('accessToken');
-//   axios.get('URL_DEL_BACK/metricas/calidad', {
+//   axios.get(`${URL_BACK}/metricas/calidad`, {
 //     headers: { Authorization: `Bearer ${token}` }
 //   })
 //   .then(res => {
 //     setFallasPorModulo(res.data.fallasPorModulo);
 //     setErrorPorAgente(res.data.errorPorAgente);
-//     setTotalIncidentes(res.data.totalIncidentes);
 //   })
 //   .catch(err => console.error(err));
 // }, []);
@@ -56,6 +50,8 @@ export default function Metricas() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const totalFallas = fallasPorModulo.reduce((acc, m) => acc + m.fallas, 0);
 
   return (
     <div style={styles.screen}>
@@ -147,7 +143,7 @@ export default function Metricas() {
                           {item.fallas}
                         </td>
                         <td style={{ ...styles.td, textAlign: 'center', color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
-                          {((item.fallas / totalIncidentes) * 100).toFixed(1)}%
+                          {((item.fallas / totalFallas) * 100).toFixed(1)}%
                         </td>
                         <td style={{ ...styles.td, textAlign: 'center' }}>
                           <span style={{

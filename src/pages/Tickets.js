@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 // import axios from 'axios'; // descomentar cuando el back esté listo
+// const URL_BACK = process.env.REACT_APP_API_URL || '/api'; // descomentar cuando el back esté listo
 
 // ── DATOS HARDCODEADOS — BORRAR cuando el back esté listo ────────
 const ticketsHardcodeados = [
@@ -13,28 +14,38 @@ const ticketsHardcodeados = [
   { id: 6, number: 'INC0000059', title: 'Error al iniciar sesión', stateLabel: 'Cerrado', priorityLabel: 'Alto', openedAt: '2026-04-28T09:00:00', updatedAt: '2026-04-29T10:00:00' },
   { id: 7, number: 'INC0000058', title: 'Pago rechazado', stateLabel: 'En progreso', priorityLabel: 'Crítico', openedAt: '2026-04-30T16:00:00', updatedAt: '2026-05-01T09:00:00' },
   { id: 8, number: 'INC0000057', title: 'No puede ver historial de clases', stateLabel: 'Nuevo', priorityLabel: 'Bajo', openedAt: '2026-05-05T11:00:00', updatedAt: '2026-05-05T11:00:00' },
+  { id: 9, number: 'INC0000056', title: 'No puede acceder a su cuenta desde el celular', stateLabel: 'Escalado', priorityLabel: 'Crítico', openedAt: '2026-05-06T09:00:00', updatedAt: '2026-05-06T10:00:00' },
 ];
 // ── CUANDO EL BACK ESTÉ LISTO: ───────────────────────────────────
-// 1. Borrar ticketsHardcodeados
+// 1. Borrar ticketsHardcodeados y el useState con ticketsHardcodeados
 // 2. Descomentar esto:
 //
 // const [tickets, setTickets] = useState([]);
 //
 // useEffect(() => {
 //   const token = localStorage.getItem('accessToken');
-//   axios.get(`${URL_BACK}/tickets`, {
+//   const params = new URLSearchParams();
+//   if (filtroEstado !== 'Todos') params.append('estado', filtroEstado);
+//   if (filtroPrioridad !== 'Todas') params.append('prioridad', filtroPrioridad);
+//   if (filtroFechaDesde) params.append('desde', filtroFechaDesde);
+//   if (filtroFechaHasta) params.append('hasta', filtroFechaHasta);
+//   axios.get(`${URL_BACK}/tickets?${params.toString()}`, {
 //     headers: { Authorization: `Bearer ${token}` }
 //   })
 //   .then(res => setTickets(res.data))
 //   .catch(err => console.error(err));
-// }, []);
+// }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta]);
+// → Cuando el back maneje los filtros, también borrar el bloque .filter() en ticketsFiltrados
 // ────────────────────────────────────────────────────────────────
 
-const ESTADOS = ['Todos', 'Nuevo', 'En progreso', 'En espera', 'Resuelto', 'Cerrado', 'Cancelado'];
+// ── ESTADOS — según criterio de Agustina:
+// Resueltos: Resuelto + Cerrado
+// No resueltos: Nuevo + En progreso + En espera
+// Escalado a 2do nivel: pendiente de implementación en el back (hardcodeado por ahora)
 const PRIORIDADES = ['Todas', 'Crítico', 'Alto', 'Moderado', 'Bajo'];
 
 const pesoPrioridad = { 'Crítico': 1, 'Alto': 2, 'Moderado': 3, 'Bajo': 4 };
-const pesoEstado = { 'Nuevo': 1, 'En progreso': 2, 'En espera': 3, 'Resuelto': 4, 'Cerrado': 5, 'Cancelado': 6 };
+const pesoEstado = { 'Nuevo': 1, 'En progreso': 2, 'En espera': 3, 'Resuelto': 4, 'Cerrado': 5, 'Escalado': 6 };
 
 const colorEstado = {
   'Nuevo': { bg: '#eff6ff', color: '#2563A8' },
@@ -42,7 +53,7 @@ const colorEstado = {
   'En espera': { bg: '#f5f3ff', color: '#7c3aed' },
   'Resuelto': { bg: '#f0fdf4', color: '#1D9E75' },
   'Cerrado': { bg: '#f8fafc', color: '#64748b' },
-  'Cancelado': { bg: '#fef2f2', color: '#E24B4A' },
+  'Escalado': { bg: '#fef2f2', color: '#E24B4A' },
 };
 
 const colorPrioridad = {
@@ -76,6 +87,10 @@ export default function Tickets() {
     const estado = params.get('estado');
     if (estado === 'noResueltos') {
       setFiltroEstado('noResueltos');
+    } else if (estado === 'resueltos') {
+      setFiltroEstado('resueltos');
+    } else if (estado === 'escalado') {
+      setFiltroEstado('escalado');
     } else if (estado) {
       setFiltroEstado(estado);
     }
@@ -105,10 +120,16 @@ export default function Tickets() {
     setFilaExpandida(prev => prev === id ? null : id);
   };
 
+  // ── FILTRADO EN EL FRONT — BORRAR cuando el back maneje los filtros ──
+  // Reemplazar por el useEffect comentado arriba
   const ticketsFiltrados = tickets
     .filter(t => {
       if (filtroEstado === 'noResueltos') {
         if (!['Nuevo', 'En progreso', 'En espera'].includes(t.stateLabel)) return false;
+      } else if (filtroEstado === 'resueltos') {
+        if (!['Resuelto', 'Cerrado'].includes(t.stateLabel)) return false;
+      } else if (filtroEstado === 'escalado') {
+        if (t.stateLabel !== 'Escalado') return false;
       } else if (filtroEstado !== 'Todos' && t.stateLabel !== filtroEstado) {
         return false;
       }
@@ -117,6 +138,7 @@ export default function Tickets() {
       if (filtroFechaHasta && new Date(t.openedAt) > new Date(filtroFechaHasta + 'T23:59:59')) return false;
       return true;
     })
+    // ────────────────────────────────────────────────────────────────
     .sort((a, b) => {
       const { columna, direccion } = orden;
       let valA, valB;
@@ -139,7 +161,11 @@ export default function Tickets() {
     });
 
   const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroFechaDesde || filtroFechaHasta;
-  const labelFiltroEstado = filtroEstado === 'noResueltos' ? 'No resueltos' : filtroEstado;
+  const labelFiltroEstado = 
+    filtroEstado === 'noResueltos' ? 'No resueltos' : 
+    filtroEstado === 'resueltos' ? 'Resueltos' : 
+    filtroEstado === 'escalado' ? 'Escalado a 2do nivel' : 
+    filtroEstado;
   const cantFiltrosActivos = [filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', !!filtroFechaDesde, !!filtroFechaHasta].filter(Boolean).length;
 
   const filtrosJSX = (
@@ -147,8 +173,13 @@ export default function Tickets() {
       <div style={styles.filtroGrupo}>
         <label style={styles.filtroLabel}>Estado</label>
         <select style={styles.select} value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
-          {ESTADOS.map(e => <option key={e}>{e}</option>)}
+          <option value="Todos">Todos</option>
+          <option value="Nuevo">Nuevo</option>
+          <option value="En progreso">En progreso</option>
+          <option value="En espera">En espera</option>
+          <option value="resueltos">Resueltos</option>
           <option value="noResueltos">No resueltos</option>
+          <option value="escalado">Escalado a 2do nivel</option>
         </select>
       </div>
       <div style={styles.filtroGrupo}>
@@ -186,7 +217,7 @@ export default function Tickets() {
           <div style={styles.pageTitle}>Incidentes</div>
           {isMobile && (
             <button style={styles.btnFiltrosMobile} onClick={() => setBottomSheetAbierto(true)}>
-               Filtros {cantFiltrosActivos > 0 && <span style={styles.badgeFiltros}>{cantFiltrosActivos}</span>}
+              Filtros {cantFiltrosActivos > 0 && <span style={styles.badgeFiltros}>{cantFiltrosActivos}</span>}
             </button>
           )}
         </div>

@@ -3,7 +3,6 @@ import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer, Cell } from 'recha
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 // import axios from 'axios'; // descomentar cuando el back esté listo
-
 // const URL_BACK = process.env.REACT_APP_API_URL || '/api'; // descomentar cuando el back esté listo
 
 export default function Dashboard() {
@@ -40,9 +39,9 @@ export default function Dashboard() {
 
   const metricas = [
     { nombre: 'Ingresados', incidentes: metricasBack.ingresados, fill: '#2563A8', filtro: null },
-    { nombre: 'Resueltos', incidentes: metricasBack.resueltos, fill: '#1D9E75', filtro: 'Resuelto' },
+    { nombre: 'Resueltos', incidentes: metricasBack.resueltos, fill: '#1D9E75', filtro: 'resueltos' },
     { nombre: 'No resueltos', incidentes: metricasBack.noResueltos, fill: '#BA7517', filtro: 'noResueltos' },
-    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A', filtro: null },
+    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A', filtro: 'escalado' },
   ];
 
   const distribucion = [

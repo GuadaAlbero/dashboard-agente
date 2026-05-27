@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-// import axios from 'axios'; // descomentar cuando el back esté listo
-// const URL_BACK = process.env.REACT_APP_API_URL || '/api'; // descomentar cuando el back esté listo
+import { getMetricas } from '../services/api';
 
 export default function Dashboard() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [metricasBack, setMetricasBack] = useState({
+    ingresados: 0, resueltos: 0, noResueltos: 0, escalados: 0
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,37 +18,28 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // ── DATOS HARDCODEADOS — reemplazar cuando el back esté listo ────
-  const [metricasBack] = useState({
-    ingresados: 64,
-    resueltos: 55,
-    noResueltos: 7,
-    escalados: 2,
-  });
-  // ── CUANDO EL BACK ESTÉ LISTO, reemplazar el useState de arriba por esto:
-  //
-  // const [metricasBack, setMetricasBack] = useState({});
-  //
-  // useEffect(() => {
-  //   const token = localStorage.getItem('accessToken');
-  //   axios.get(`${URL_BACK}/metricas`, {
-  //     headers: { Authorization: `Bearer ${token}` }
-  //   })
-  //   .then(res => setMetricasBack(res.data))
-  //   .catch(err => console.error(err));
-  // }, []);
-  // ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const fetchMetricas = () => {
+      getMetricas()
+        .then(data => setMetricasBack(data))
+        .catch(err => console.error(err));
+    };
+
+    fetchMetricas(); // carga inicial
+    const intervalo = setInterval(fetchMetricas, 30000); // polling cada 30 segundos
+    return () => clearInterval(intervalo); // limpieza al desmontar
+  }, []);
 
   const metricas = [
-    { nombre: 'Ingresados', incidentes: metricasBack.ingresados, fill: '#2563A8', filtro: null },
-    { nombre: 'Resueltos', incidentes: metricasBack.resueltos, fill: '#1D9E75', filtro: 'resueltos' },
-    { nombre: 'No resueltos', incidentes: metricasBack.noResueltos, fill: '#BA7517', filtro: 'noResueltos' },
-    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A', filtro: 'escalado' },
+    { nombre: 'Ingresados',          incidentes: metricasBack.ingresados,   fill: '#2563A8', filtro: null },
+    { nombre: 'Resueltos',           incidentes: metricasBack.resueltos,    fill: '#1D9E75', filtro: 'resueltos' },
+    { nombre: 'No resueltos',        incidentes: metricasBack.noResueltos,  fill: '#BA7517', filtro: 'noResueltos' },
+    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados,  fill: '#E24B4A', filtro: 'escalado' },
   ];
 
   const distribucion = [
-    { nombre: 'Resueltos', incidentes: metricasBack.resueltos, fill: '#1D9E75' },
-    { nombre: 'No resueltos', incidentes: metricasBack.noResueltos, fill: '#BA7517' },
+    { nombre: 'Resueltos',           incidentes: metricasBack.resueltos,   fill: '#1D9E75' },
+    { nombre: 'No resueltos',        incidentes: metricasBack.noResueltos, fill: '#BA7517' },
     { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A' },
   ];
 

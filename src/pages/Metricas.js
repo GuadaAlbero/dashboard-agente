@@ -1,54 +1,27 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import Sidebar from '../components/Sidebar';
-// import axios from 'axios'; // descomentar cuando el back esté listo
-
-// const URL_BACK = process.env.REACT_APP_API_URL || '/api'; // descomentar cuando el back esté listo
-
-// ── DATOS HARDCODEADOS — BORRAR cuando el back esté listo ────────
-const fallasPorModulo = [
-  { modulo: 'Cambio de horario', fallas: 12 },
-  { modulo: 'Cancelación fuera de plazo', fallas: 8 },
-  { modulo: 'Sin confirmación', fallas: 6 },
-  { modulo: 'Turno no aparece', fallas: 5 },
-  { modulo: 'Reserva de turno', fallas: 1 },
-];
-
-const errorPorAgente = [
-  { agente: 'Subag. Cancelación', tasa: 18 },
-  { agente: 'Subag. Cambio horario', tasa: 14 },
-  { agente: 'Subag. Turno', tasa: 8 },
-  { agente: 'Agente Enrutador', tasa: 4 },
-  { agente: 'Agente Entrada', tasa: 2 },
-];
-// ── CUANDO EL BACK ESTÉ LISTO: ───────────────────────────────────
-// 1. Borrar las constantes de arriba
-// 2. Descomentar esto:
-//
-// const [fallasPorModulo, setFallasPorModulo] = useState([]);
-// const [errorPorAgente, setErrorPorAgente] = useState([]);
-//
-// useEffect(() => {
-//   const token = localStorage.getItem('accessToken');
-//   axios.get(`${URL_BACK}/metricas/calidad`, {
-//     headers: { Authorization: `Bearer ${token}` }
-//   })
-//   .then(res => {
-//     setFallasPorModulo(res.data.fallasPorModulo);
-//     setErrorPorAgente(res.data.errorPorAgente);
-//   })
-//   .catch(err => console.error(err));
-// }, []);
-// ────────────────────────────────────────────────────────────────
+import { getMetricasCalidad } from '../services/api';
 
 export default function Metricas() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [fallasPorModulo, setFallasPorModulo] = useState([]);
+  const [errorPorAgente, setErrorPorAgente] = useState([]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    getMetricasCalidad()
+      .then(data => {
+        setFallasPorModulo(data.fallasPorModulo);
+        setErrorPorAgente(data.errorPorAgente);
+      })
+      .catch(err => console.error(err));
   }, []);
 
   const totalFallas = fallasPorModulo.reduce((acc, m) => acc + m.fallas, 0);
@@ -143,7 +116,7 @@ export default function Metricas() {
                           {item.fallas}
                         </td>
                         <td style={{ ...styles.td, textAlign: 'center', color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
-                          {((item.fallas / totalFallas) * 100).toFixed(1)}%
+                          {totalFallas > 0 ? ((item.fallas / totalFallas) * 100).toFixed(1) : 0}%
                         </td>
                         <td style={{ ...styles.td, textAlign: 'center' }}>
                           <span style={{

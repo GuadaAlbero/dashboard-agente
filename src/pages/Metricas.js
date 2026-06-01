@@ -28,11 +28,7 @@ export default function Metricas() {
 
   return (
     <div style={styles.screen}>
-      <Sidebar
-        paginaActiva="metricas"
-        sidebarAbierto={sidebarAbierto}
-        setSidebarAbierto={setSidebarAbierto}
-      />
+      <Sidebar paginaActiva="metricas" sidebarAbierto={sidebarAbierto} setSidebarAbierto={setSidebarAbierto} />
 
       <div style={styles.main}>
         <div style={styles.topbar}>
@@ -41,7 +37,6 @@ export default function Metricas() {
 
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
           <div style={{ ...styles.row2, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
-
             <div style={styles.chartCard}>
               <div style={styles.chartTitle}>Módulos con fallas recurrentes</div>
               <ResponsiveContainer width="100%" height={280}>
@@ -55,14 +50,12 @@ export default function Metricas() {
                   <YAxis type="category" dataKey="modulo" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#64748b' }} />
                   <Tooltip formatter={(value) => [`${value} fallas`, 'Cantidad']} />
                   <Bar dataKey="fallas" radius={[0, 6, 6, 0]}>
-                    {[...fallasPorModulo]
-                      .sort((a, b) => b.fallas - a.fallas)
-                      .map((entry, index, arr) => (
-                        <Cell key={index} fill={
-                          entry.fallas === Math.max(...arr.map(e => e.fallas)) ? '#E24B4A' :
-                          entry.fallas >= 6 ? '#BA7517' : '#2563A8'
-                        } />
-                      ))}
+                    {[...fallasPorModulo].sort((a, b) => b.fallas - a.fallas).map((entry, index, arr) => (
+                      <Cell key={index} fill={
+                        entry.fallas === Math.max(...arr.map(e => e.fallas)) ? '#E24B4A' :
+                        entry.fallas >= 6 ? '#BA7517' : '#2563A8'
+                      } />
+                    ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -81,11 +74,9 @@ export default function Metricas() {
                   <YAxis type="category" dataKey="agente" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#64748b' }} />
                   <Tooltip formatter={(value) => [`${value}%`, 'Tasa de error']} />
                   <Bar dataKey="tasa" radius={[0, 6, 6, 0]}>
-                    {[...errorPorAgente]
-                      .sort((a, b) => b.tasa - a.tasa)
-                      .map((entry, index) => (
-                        <Cell key={index} fill={entry.tasa > 10 ? '#E24B4A' : entry.tasa > 5 ? '#BA7517' : '#1D9E75'} />
-                      ))}
+                    {[...errorPorAgente].sort((a, b) => b.tasa - a.tasa).map((entry, index) => (
+                      <Cell key={index} fill={entry.tasa > 10 ? '#E24B4A' : entry.tasa > 5 ? '#BA7517' : '#1D9E75'} />
+                    ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -105,30 +96,24 @@ export default function Metricas() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...fallasPorModulo]
-                    .sort((a, b) => b.fallas - a.fallas)
-                    .map((item, index) => (
-                      <tr key={index} style={index % 2 === 0 ? styles.trEven : styles.trOdd}>
-                        <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
-                          {item.modulo}
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center', color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
-                          {item.fallas}
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center', color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
-                          {totalFallas > 0 ? ((item.fallas / totalFallas) * 100).toFixed(1) : 0}%
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center' }}>
-                          <span style={{
-                            ...styles.badge,
-                            background: item.fallas >= 10 ? '#fef2f2' : item.fallas >= 6 ? '#fff7ed' : item.fallas >= 3 ? '#f0fdf4' : '#f8fafc',
-                            color: item.fallas >= 10 ? '#E24B4A' : item.fallas >= 6 ? '#BA7517' : item.fallas >= 3 ? '#1D9E75' : '#94a3b8',
-                          }}>
-                            {item.fallas >= 10 ? 'Alta' : item.fallas >= 6 ? 'Media' : item.fallas >= 3 ? 'Baja' : 'Sin prioridad'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                  {[...fallasPorModulo].sort((a, b) => b.fallas - a.fallas).map((item, index) => (
+                    <tr key={index} style={index % 2 === 0 ? styles.trEven : styles.trOdd}>
+                      <td style={{ ...styles.td, color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>{item.modulo}</td>
+                      <td style={{ ...styles.td, textAlign: 'center', color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>{item.fallas}</td>
+                      <td style={{ ...styles.td, textAlign: 'center', color: item.fallas < 3 ? '#94a3b8' : '#1A3A5C' }}>
+                        {totalFallas > 0 ? ((item.fallas / totalFallas) * 100).toFixed(1) : 0}%
+                      </td>
+                      <td style={{ ...styles.td, textAlign: 'center' }}>
+                        <span style={{
+                          ...styles.badge,
+                          background: item.fallas >= 10 ? '#fef2f2' : item.fallas >= 6 ? '#fff7ed' : item.fallas >= 3 ? '#f0fdf4' : '#f8fafc',
+                          color: item.fallas >= 10 ? '#E24B4A' : item.fallas >= 6 ? '#BA7517' : item.fallas >= 3 ? '#1D9E75' : '#94a3b8',
+                        }}>
+                          {item.fallas >= 10 ? 'Alta' : item.fallas >= 6 ? 'Media' : item.fallas >= 3 ? 'Baja' : 'Sin prioridad'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -143,7 +128,7 @@ const styles = {
   screen: {
     display: 'flex',
     minHeight: '100vh',
-    fontFamily: "'Poppins', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
     background: '#f1f5f9',
   },
   main: {
@@ -158,8 +143,9 @@ const styles = {
     borderBottom: '1px solid #e2e8f0',
   },
   pageTitle: {
-    fontSize: '16px',
-    fontWeight: '600',
+    fontFamily: "'Syne', sans-serif",
+    fontSize: '20px',
+    fontWeight: '800',
     color: '#1A3A5C',
   },
   content: {
@@ -180,8 +166,9 @@ const styles = {
     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
   chartTitle: {
+    fontFamily: "'Syne', sans-serif",
     fontSize: '14px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1A3A5C',
     marginBottom: '16px',
   },

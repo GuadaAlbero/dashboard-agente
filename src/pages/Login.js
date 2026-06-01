@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -13,48 +13,20 @@ function Login() {
   const [codigo, setCodigo] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) navigate('/dashboard');
+  }, [navigate]);
+
   const handleSubmit = async () => {
     setError('');
-
-    if (!email || !password) {
-      setError('Completá todos los campos.');
-      return;
-    }
-
-    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (!emailValido) {
-      setError('Ingresá un email válido.');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.');
-      return;
-    }
-
-    const tieneNumero = /[0-9]/.test(password);
-    if (!tieneNumero) {
-      setError('La contraseña debe tener al menos un número.');
-      return;
-    }
-
-    const tieneLetra = /[a-zA-Z]/.test(password);
-    if (!tieneLetra) {
-      setError('La contraseña debe tener al menos una letra.');
-      return;
-    }
-
-    const tieneMayuscula = /[A-Z]/.test(password);
-    if (!tieneMayuscula) {
-      setError('La contraseña debe tener al menos una mayúscula.');
-      return;
-    }
-
-    const tieneEspecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    if (!tieneEspecial) {
-      setError('La contraseña debe tener al menos un carácter especial (!@#$%...).');
-      return;
-    }
+    if (!email || !password) { setError('Completá todos los campos.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Ingresá un email válido.'); return; }
+    if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); return; }
+    if (!/[0-9]/.test(password)) { setError('La contraseña debe tener al menos un número.'); return; }
+    if (!/[a-zA-Z]/.test(password)) { setError('La contraseña debe tener al menos una letra.'); return; }
+    if (!/[A-Z]/.test(password)) { setError('La contraseña debe tener al menos una mayúscula.'); return; }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) { setError('La contraseña debe tener al menos un carácter especial.'); return; }
 
     try {
       if (isRegistro) {
@@ -64,6 +36,7 @@ function Login() {
       }
       const response = await axios.post(`${URL_BACK}/auth/sign-in`, { email, password });
       localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('userEmail', email);
       navigate('/dashboard');
     } catch (err) {
       setError('Email o contraseña incorrectos.');
@@ -119,9 +92,9 @@ function Login() {
                 placeholder="operador@estudio.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
               />
             </div>
-
             <div style={styles.field}>
               <label style={styles.label}>Contraseña</label>
               <input
@@ -130,19 +103,15 @@ function Login() {
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
               />
             </div>
-
             <button style={styles.btn} onClick={handleSubmit}>
               {isRegistro ? 'Registrarse' : 'Ingresar'}
             </button>
-
             <div style={styles.toggle}>
               {isRegistro ? '¿Ya tenés cuenta?' : '¿No tenés cuenta?'}
-              <span
-                style={styles.link}
-                onClick={() => { setIsRegistro(!isRegistro); setError(''); }}
-              >
+              <span style={styles.link} onClick={() => { setIsRegistro(!isRegistro); setError(''); }}>
                 {isRegistro ? ' Iniciá sesión' : ' Registrate'}
               </span>
             </div>
@@ -160,7 +129,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    fontFamily: "'Poppins', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   },
   card: {
     background: 'white',
@@ -175,8 +144,9 @@ const styles = {
     marginBottom: '20px',
   },
   logoName: {
-    fontSize: '20px',
-    fontWeight: '600',
+    fontFamily: "'Syne', sans-serif",
+    fontSize: '22px',
+    fontWeight: '800',
     color: '#1A3A5C',
   },
   logoSub: {
@@ -222,7 +192,8 @@ const styles = {
     border: '1px solid #e2e8f0',
     boxSizing: 'border-box',
     outline: 'none',
-    fontFamily: "'Poppins', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    color: '#1A3A5C',
   },
   btn: {
     width: '100%',
@@ -235,7 +206,7 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     marginTop: '4px',
-    fontFamily: "'Poppins', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   },
   toggle: {
     textAlign: 'center',

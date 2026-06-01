@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import { getMetricas } from '../services/api';
+import { getMetricas, getTickets } from '../services/api';
 
 export default function Dashboard() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [metricasBack, setMetricasBack] = useState({
     ingresados: 0, resueltos: 0, noResueltos: 0, escalados: 0
   });
+  const [ultimosTickets, setUltimosTickets] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,29 +20,48 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const fetchMetricas = () => {
+    const fetchData = () => {
       getMetricas()
         .then(data => setMetricasBack(data))
         .catch(err => console.error(err));
+      getTickets()
+        .then(data => setUltimosTickets(data.slice(0, 5)))
+        .catch(err => console.error(err));
     };
-
-    fetchMetricas(); // carga inicial
-    const intervalo = setInterval(fetchMetricas, 30000); // polling cada 30 segundos
-    return () => clearInterval(intervalo); // limpieza al desmontar
+    fetchData();
+    const intervalo = setInterval(fetchData, 30000);
+    return () => clearInterval(intervalo);
   }, []);
 
+  const total = metricasBack.ingresados || 1;
+
   const metricas = [
-    { nombre: 'Ingresados',          incidentes: metricasBack.ingresados,   fill: '#2563A8', filtro: null },
-    { nombre: 'Resueltos',           incidentes: metricasBack.resueltos,    fill: '#1D9E75', filtro: 'resueltos' },
-    { nombre: 'No resueltos',        incidentes: metricasBack.noResueltos,  fill: '#BA7517', filtro: 'noResueltos' },
-    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados,  fill: '#E24B4A', filtro: 'escalado' },
+    { nombre: 'Ingresados',            incidentes: metricasBack.ingresados,  fill: '#2563A8', filtro: null },
+    { nombre: 'Resueltos',             incidentes: metricasBack.resueltos,   fill: '#1D9E75', filtro: 'resueltos' },
+    { nombre: 'No resueltos',          incidentes: metricasBack.noResueltos, fill: '#BA7517', filtro: 'noResueltos' },
+    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados,   fill: '#E24B4A', filtro: 'escalado' },
   ];
 
   const distribucion = [
-    { nombre: 'Resueltos',           incidentes: metricasBack.resueltos,   fill: '#1D9E75' },
-    { nombre: 'No resueltos',        incidentes: metricasBack.noResueltos, fill: '#BA7517' },
-    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados, fill: '#E24B4A' },
+    { nombre: 'Resueltos',             incidentes: metricasBack.resueltos,   fill: '#1D9E75' },
+    { nombre: 'No resueltos',          incidentes: metricasBack.noResueltos, fill: '#BA7517' },
+    { nombre: 'Escalados a 2do nivel', incidentes: metricasBack.escalados,   fill: '#E24B4A' },
   ];
+
+  const colorEstado = {
+    'New':         { bg: '#eff6ff', color: '#2563A8' },
+    'In Progress': { bg: '#fff7ed', color: '#BA7517' },
+    'On Hold':     { bg: '#f5f3ff', color: '#7c3aed' },
+    'Resolved':    { bg: '#f0fdf4', color: '#1D9E75' },
+    'Closed':      { bg: '#f8fafc', color: '#64748b' },
+    'Canceled':    { bg: '#f8fafc', color: '#94a3b8' },
+    'Escalado':    { bg: '#fef2f2', color: '#E24B4A' },
+  };
+
+  const estadoES = {
+    'New': 'Nuevo', 'In Progress': 'En progreso', 'On Hold': 'En espera',
+    'Resolved': 'Resuelto', 'Closed': 'Cerrado', 'Canceled': 'Cancelado', 'Escalado': 'Escalado',
+  };
 
   const handleCardClick = (item) => {
     if (item.filtro) {
@@ -65,51 +85,85 @@ export default function Dashboard() {
         </div>
 
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
-          <div style={{ ...styles.metricsGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)' }}>
+
+          {/* Cards */}
+          <div style={{ ...styles.metricsGrid, gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)' }}>
             {metricas.map((item) => (
               <div
                 key={item.nombre}
                 onClick={() => handleCardClick(item)}
-                style={{
-                  ...styles.metricCard,
-                  borderTop: `4px solid ${item.fill}`,
-                  padding: isMobile ? '12px' : '16px',
-                  textAlign: isMobile ? 'center' : 'left',
-                  cursor: 'pointer',
-                }}
+                style={{ ...styles.metricCard, borderTop: `4px solid ${item.fill}`, cursor: 'pointer' }}
               >
                 <div style={styles.metricLabel}>{item.nombre}</div>
-                <div style={{ ...styles.metricValue, color: item.fill, fontSize: isMobile ? '22px' : '28px' }}>
+                <div style={{ ...styles.metricValue, color: item.fill, fontSize: isMobile ? '28px' : '40px' }}>
                   {item.incidentes}
+                </div>
+                <div style={styles.metricSub}>
+                  {item.filtro ? `${Math.round((item.incidentes / total) * 100)}% del total` : 'Total ingresados'}
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={styles.chartCard}>
-            <div style={styles.chartTitle}>Distribución de tickets ingresados</div>
-            <ResponsiveContainer width="100%" height={isMobile ? 160 : 320}>
-              <PieChart>
-                <Pie
-                  data={distribucion}
-                  dataKey="incidentes"
-                  nameKey="nombre"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={isMobile ? 50 : 110}
-                  animationBegin={300}
-                  animationDuration={1500}
-                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                  labelLine={true}
-                >
-                  {distribucion.map((entry, index) => (
-                    <Cell key={index} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`${value} tickets`, 'Cantidad']} />
-                {!isMobile && <Legend />}
-              </PieChart>
-            </ResponsiveContainer>
+          {/* Gráfico + Últimos tickets */}
+          <div style={{ ...styles.bottomRow, flexDirection: isMobile ? 'column' : 'row' }}>
+
+            <div style={{ ...styles.chartCard, width: isMobile ? '100%' : '42%', flexShrink: 0 }}>
+              <div style={styles.chartTitle}>Distribución de tickets</div>
+              <ResponsiveContainer width="100%" height={isMobile ? 160 : 300}>
+                <PieChart>
+                  <Pie
+                    data={distribucion}
+                    dataKey="incidentes"
+                    nameKey="nombre"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={isMobile ? 55 : 110}
+                    animationBegin={300}
+                    animationDuration={1500}
+                    label={({ percent }) => `${Math.round(percent * 100)}%`}
+                    labelLine={true}
+                  >
+                    {distribucion.map((entry, index) => (
+                      <Cell key={index} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} tickets`, 'Cantidad']} />
+                  {!isMobile && <Legend />}
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div style={{ ...styles.chartCard, flex: 1 }}>
+              <div style={styles.chartTitle}>Últimos incidentes</div>
+              <div style={styles.ticketList}>
+                {ultimosTickets.length === 0 ? (
+                  <div style={styles.emptyMsg}>Sin incidentes recientes</div>
+                ) : (
+                  ultimosTickets.map(t => (
+                    <div
+                      key={t.id}
+                      style={styles.ticketRow}
+                      onClick={() => navigate('/tickets')}
+                    >
+                      <span style={styles.ticketNum}>#{t.number.slice(-5)}</span>
+                      <span style={styles.ticketTitle}>{t.title}</span>
+                      <span style={{
+                        ...styles.badge,
+                        background: colorEstado[t.stateLabel]?.bg || '#f8fafc',
+                        color: colorEstado[t.stateLabel]?.color || '#64748b',
+                      }}>
+                        {estadoES[t.stateLabel] ?? t.stateLabel}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div style={styles.verTodos} onClick={() => navigate('/tickets')}>
+                Ver todos los incidentes →
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -121,7 +175,7 @@ const styles = {
   screen: {
     display: 'flex',
     minHeight: '100vh',
-    fontFamily: "'Poppins', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
     background: '#f1f5f9',
   },
   main: {
@@ -136,8 +190,9 @@ const styles = {
     borderBottom: '1px solid #e2e8f0',
   },
   pageTitle: {
-    fontSize: '16px',
-    fontWeight: '600',
+    fontFamily: "'Syne', sans-serif",
+    fontSize: '20px',
+    fontWeight: '800',
     color: '#1A3A5C',
   },
   content: {
@@ -161,11 +216,21 @@ const styles = {
   metricLabel: {
     fontSize: '12px',
     color: '#64748b',
-    marginBottom: '6px',
+    marginBottom: '8px',
+    fontWeight: '600',
   },
   metricValue: {
-    fontSize: '28px',
     fontWeight: '700',
+    lineHeight: 1,
+  },
+  metricSub: {
+    fontSize: '12px',
+    color: '#94a3b8',
+    marginTop: '8px',
+  },
+  bottomRow: {
+    display: 'flex',
+    gap: '16px',
   },
   chartCard: {
     background: 'white',
@@ -174,9 +239,61 @@ const styles = {
     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
   chartTitle: {
+    fontFamily: "'Syne', sans-serif",
     fontSize: '14px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1A3A5C',
     marginBottom: '16px',
+  },
+  ticketList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  ticketRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '8px 12px',
+    background: '#f8fafc',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    border: '1px solid #f1f5f9',
+  },
+  ticketNum: {
+    fontSize: '11px',
+    color: '#94a3b8',
+    fontWeight: '600',
+    flexShrink: 0,
+  },
+  ticketTitle: {
+    fontSize: '12px',
+    color: '#1A3A5C',
+    flex: 1,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  badge: {
+    fontSize: '10px',
+    padding: '2px 8px',
+    borderRadius: '20px',
+    fontWeight: '500',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+  },
+  emptyMsg: {
+    fontSize: '13px',
+    color: '#94a3b8',
+    textAlign: 'center',
+    padding: '24px',
+  },
+  verTodos: {
+    fontSize: '12px',
+    color: '#2563A8',
+    cursor: 'pointer',
+    marginTop: '12px',
+    textAlign: 'right',
+    fontWeight: '600',
   },
 };

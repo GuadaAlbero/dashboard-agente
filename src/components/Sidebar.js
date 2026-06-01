@@ -2,48 +2,51 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Sidebar({ paginaActiva, sidebarAbierto, setSidebarAbierto }) {
   const navigate = useNavigate();
+  const userEmail = localStorage.getItem('userEmail') || 'operador@mail.com';
+  const iniciales = userEmail.substring(0, 2).toUpperCase();
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('userEmail');
     navigate('/login');
   };
 
+  const navItems = [
+    { key: 'dashboard', label: 'Dashboard',  icon: 'dashboard-icon.png', ruta: '/dashboard' },
+    { key: 'metricas',  label: 'Métricas',   icon: 'analytics.png',  ruta: '/metricas'  },
+    { key: 'tickets',   label: 'Incidentes', icon: 'files.png',         ruta: '/tickets'   },
+  ];
+
   return (
-    <div style={{ ...styles.sidebar, width: sidebarAbierto ? '200px' : '52px' }}>
+    <div style={{ ...styles.sidebar, width: sidebarAbierto ? '220px' : '52px' }}>
       <div style={styles.logoWrap}>
         <button style={styles.hamburger} onClick={() => setSidebarAbierto(!sidebarAbierto)}>☰</button>
         {sidebarAbierto && (
           <div>
-            <div style={styles.logoName}>Agente IA Soporte</div>
+            <div style={styles.logoName}>AgentAI Soporte</div>
             <div style={styles.logoSub}>Turnera de Pilates</div>
           </div>
         )}
       </div>
       <nav style={styles.nav}>
-        <div
-          style={paginaActiva === 'dashboard' ? styles.navItemActive : styles.navItem}
-          onClick={() => navigate('/dashboard')}
-        >
-          {sidebarAbierto ? 'Dashboard' : <img src='dashboard-icon.png' width={20} height={20} alt="" />}
-        </div>
-        <div
-          style={paginaActiva === 'metricas' ? styles.navItemActive : styles.navItem}
-          onClick={() => navigate('/metricas')}
-        >
-          {sidebarAbierto ? 'Métricas' : <img src='metricas-icon.png' width={20} height={20} alt="" />}
-        </div>
-        <div
-          style={paginaActiva === 'tickets' ? styles.navItemActive : styles.navItem}
-          onClick={() => navigate('/tickets')}
-        >
-          {sidebarAbierto ? 'Incidentes' : <img src='ticket.png' width={20} height={20} alt="" />}
-        </div>
+        {navItems.map(item => (
+          <div
+            key={item.key}
+            style={paginaActiva === item.key ? styles.navItemActive : styles.navItem}
+            onClick={() => navigate(item.ruta)}
+          >
+            {sidebarAbierto
+              ? item.label
+              : <img src={item.icon} width={20} height={20} alt="" />
+            }
+          </div>
+        ))}
       </nav>
       <div style={styles.sidebarFooter}>
-        <div style={styles.avatar}>OP</div>
+        <div style={styles.avatar}>{iniciales}</div>
         {sidebarAbierto && (
-          <div>
-            <div style={styles.userName}>Operador</div>
+          <div style={{ overflow: 'hidden' }}>
+            <div style={styles.userName}>{userEmail}</div>
             <div style={styles.logout} onClick={handleLogout}>Cerrar sesión</div>
           </div>
         )}
@@ -61,7 +64,7 @@ const styles = {
     flexShrink: 0,
     transition: 'width 0.2s ease',
     overflow: 'hidden',
-    fontFamily: "'Poppins', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
   },
   logoWrap: {
     padding: '12px 16px',
@@ -69,6 +72,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
+    minHeight: '56px',
   },
   hamburger: {
     background: 'none',
@@ -79,11 +83,15 @@ const styles = {
     flexShrink: 0,
   },
   logoName: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#1A3A5C',
-    whiteSpace: 'nowrap',
-  },
+  fontFamily: "'Syne', sans-serif",
+  fontSize: '11px',
+  fontWeight: '800',
+  color: '#1A3A5C',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  maxWidth: '155px',
+},
   logoSub: {
     fontSize: '11px',
     color: '#64748b',
@@ -94,15 +102,15 @@ const styles = {
     flex: 1,
   },
   navItem: {
-    padding: '8px 16px',
-    fontSize: '13px',
+    padding: '10px 16px',
+    fontSize: '15px',
     color: '#64748b',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   },
   navItemActive: {
-    padding: '8px 16px',
-    fontSize: '13px',
+    padding: '10px 16px',
+    fontSize: '15px',
     color: '#2563A8',
     fontWeight: '600',
     background: '#EEF4FB',
@@ -117,26 +125,29 @@ const styles = {
     gap: '8px',
   },
   avatar: {
-    width: '28px',
-    height: '28px',
+    width: '32px',
+    height: '32px',
     borderRadius: '50%',
     background: '#EEF4FB',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '11px',
+    fontSize: '12px',
     fontWeight: '600',
     color: '#2563A8',
     flexShrink: 0,
   },
   userName: {
-    fontSize: '12px',
+    fontSize: '13px',
     fontWeight: '500',
     color: '#1A3A5C',
     whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '160px',
   },
   logout: {
-    fontSize: '11px',
+    fontSize: '12px',
     color: '#64748b',
     cursor: 'pointer',
     whiteSpace: 'nowrap',

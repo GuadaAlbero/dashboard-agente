@@ -30,7 +30,7 @@ function InterceptorAxios() {
 
 function RutaProtegida({ children }) {
   const token = localStorage.getItem('accessToken');
-  const estaAutenticado = true; // ← cambiar a !!token cuando CORS esté resuelto
+  const estaAutenticado = !!token; // ← cambiar a !!token cuando CORS esté resuelto
   return estaAutenticado ? children : <Navigate to="/login" />;
 }
 

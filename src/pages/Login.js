@@ -11,22 +11,41 @@ function Login() {
   const [error, setError] = useState('');
   const [esperandoConfirmacion, setEsperandoConfirmacion] = useState(false);
   const [codigo, setCodigo] = useState('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) navigate('/dashboard');
   }, [navigate]);
 
+  const validarRegistro = () => {
+    if (!email || !password) return 'Completá todos los campos.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Ingresá un email válido.';
+    if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+    if (!/[0-9]/.test(password)) return 'La contraseña debe tener al menos un número.';
+    if (!/[a-zA-Z]/.test(password)) return 'La contraseña debe tener al menos una letra.';
+    if (!/[A-Z]/.test(password)) return 'La contraseña debe tener al menos una mayúscula.';
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'La contraseña debe tener al menos un carácter especial.';
+    return null;
+  };
+
+  const validarLogin = () => {
+    if (!email || !password) return 'Completá todos los campos.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Ingresá un email válido.';
+    return null;
+  };
+
   const handleSubmit = async () => {
     setError('');
-    if (!email || !password) { setError('Completá todos los campos.'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Ingresá un email válido.'); return; }
-    if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres.'); return; }
-    if (!/[0-9]/.test(password)) { setError('La contraseña debe tener al menos un número.'); return; }
-    if (!/[a-zA-Z]/.test(password)) { setError('La contraseña debe tener al menos una letra.'); return; }
-    if (!/[A-Z]/.test(password)) { setError('La contraseña debe tener al menos una mayúscula.'); return; }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) { setError('La contraseña debe tener al menos un carácter especial.'); return; }
+    const mensajeError = isRegistro ? validarRegistro() : validarLogin();
+    if (mensajeError) { setError(mensajeError); return; }
 
     try {
       if (isRegistro) {
@@ -56,8 +75,8 @@ function Login() {
   };
 
   return (
-    <div style={styles.screen}>
-      <div style={styles.card}>
+    <div style={isMobile ? styles.screenMobile : styles.screen}>
+      <div style={isMobile ? styles.cardMobile : styles.card}>
         <div style={styles.logo}>
           <div style={styles.logoName}>Agente IA Soporte</div>
           <div style={styles.logoSub}>Panel de operadores</div>
@@ -131,6 +150,14 @@ const styles = {
     alignItems: 'center',
     fontFamily: "'Plus Jakarta Sans', sans-serif",
   },
+screenMobile: {
+    minHeight: '100vh',
+    background: 'white',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+  },
   card: {
     background: 'white',
     borderRadius: '12px',
@@ -139,6 +166,17 @@ const styles = {
     maxWidth: '360px',
     boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
   },
+cardMobile: {
+  background: 'white',
+  padding: '0 28px',
+  width: '100%',
+  minHeight: '100vh',
+  boxSizing: 'border-box',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  paddingBottom: '80px',
+},
   logo: {
     textAlign: 'center',
     marginBottom: '20px',
@@ -154,11 +192,12 @@ const styles = {
     color: '#64748b',
     marginTop: '4px',
   },
-  divider: {
-    border: 'none',
-    borderTop: '1px solid #e2e8f0',
-    marginBottom: '20px',
-  },
+divider: {
+  border: 'none',
+  borderTop: '1px solid #e2e8f0',
+  marginBottom: '28px',
+  marginTop: '4px',
+},
   error: {
     background: '#fef2f2',
     color: '#dc2626',

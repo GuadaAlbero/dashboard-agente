@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { getTickets } from '../services/api';
@@ -221,8 +221,8 @@ export default function Tickets() {
                     </tr>
                   ) : (
                     ticketsFiltrados.map((ticket, index) => (
-                      <>
-                        <tr key={ticket.id} style={index % 2 === 0 ? styles.trEven : styles.trOdd} onClick={() => isMobile && toggleFila(ticket.id)}>
+                      <React.Fragment key={ticket.id}>
+                        <tr style={index % 2 === 0 ? styles.trEven : styles.trOdd} onClick={() => isMobile && toggleFila(ticket.id)}>
                           {isMobile && (
                             <td style={{ ...styles.td, width: '20px', padding: '6px 4px', color: '#94a3b8', fontSize: '9px' }}>
                               {filaExpandida === ticket.id ? '▲' : '▼'}
@@ -265,7 +265,7 @@ export default function Tickets() {
                           )}
                         </tr>
                         {isMobile && filaExpandida === ticket.id && (
-                          <tr key={`${ticket.id}-detalle`} style={{ background: '#f8fafc' }}>
+                          <tr style={{ background: '#f8fafc' }}>
                             <td colSpan={5} style={{ padding: '6px 12px 10px 30px' }}>
                               <div style={{ fontSize: '11px', color: '#64748b', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                                 <span><strong>Abierto:</strong> {new Date(ticket.openedAt).toLocaleDateString('es-AR')}</span>
@@ -274,7 +274,7 @@ export default function Tickets() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     ))
                   )}
                 </tbody>

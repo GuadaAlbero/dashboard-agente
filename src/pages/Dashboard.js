@@ -25,7 +25,9 @@ export default function Dashboard() {
         .then(data => setMetricasBack(data))
         .catch(err => console.error(err));
       getTickets()
-        .then(data => setUltimosTickets(data.slice(0, 5)))
+        .then(data => setUltimosTickets(
+          [...data].sort((a, b) => new Date(b.openedAt) - new Date(a.openedAt)).slice(0, 5)
+        ))
         .catch(err => console.error(err));
     };
     fetchData();
@@ -108,7 +110,7 @@ export default function Dashboard() {
           {/* Gráfico + Últimos tickets */}
           <div style={{ ...styles.bottomRow, flexDirection: isMobile ? 'column' : 'row' }}>
 
-            <div style={{ ...styles.chartCard, width: isMobile ? '100%' : '42%', flexShrink: 0 }}>
+            <div style={{ ...styles.chartCard, width: isMobile ? '100%' : '42%', flexShrink: 0, padding: isMobile ? '16px' : '20px', boxSizing: 'border-box' }}>
               <div style={styles.chartTitle}>Distribución de tickets</div>
               <ResponsiveContainer width="100%" height={isMobile ? 160 : 300}>
                 <PieChart>
@@ -118,11 +120,11 @@ export default function Dashboard() {
                     nameKey="nombre"
                     cx="50%"
                     cy="50%"
-                    outerRadius={isMobile ? 55 : 110}
+                    outerRadius={isMobile ? 45 : 110}
                     animationBegin={300}
                     animationDuration={1500}
                     label={({ percent }) => `${Math.round(percent * 100)}%`}
-                    labelLine={true}
+                    labelLine={false}
                   >
                     {distribucion.map((entry, index) => (
                       <Cell key={index} fill={entry.fill} />
@@ -134,7 +136,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
 
-            <div style={{ ...styles.chartCard, flex: 1 }}>
+            <div style={{ ...styles.chartCard, flex: 1, padding: isMobile ? '16px' : '20px', boxSizing: 'border-box' }}>
               <div style={styles.chartTitle}>Últimos incidentes</div>
               <div style={styles.ticketList}>
                 {ultimosTickets.length === 0 ? (
@@ -235,7 +237,6 @@ const styles = {
   chartCard: {
     background: 'white',
     borderRadius: '8px',
-    padding: '20px',
     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
   chartTitle: {

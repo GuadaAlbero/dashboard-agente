@@ -110,7 +110,7 @@ export default function Dashboard() {
           {/* Gráfico + Últimos tickets */}
           <div style={{ ...styles.bottomRow, flexDirection: isMobile ? 'column' : 'row' }}>
 
-            <div style={{ ...styles.chartCard, width: isMobile ? '100%' : '42%', flexShrink: 0, padding: isMobile ? '16px' : '20px', boxSizing: 'border-box' }}>
+            <div style={{ ...styles.chartCard, width: isMobile ? '100%' : '42%', flexShrink: 0, padding: isMobile ? '16px' : '20px', boxSizing: 'border-box', minHeight: isMobile ? 'auto' : '380px' }}>
               <div style={styles.chartTitle}>Distribución de tickets</div>
               <ResponsiveContainer width="100%" height={isMobile ? 160 : 300}>
                 <PieChart>

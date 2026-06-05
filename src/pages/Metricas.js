@@ -24,7 +24,8 @@ export default function Metricas() {
       .catch(err => console.error(err));
   }, []);
 
-  const totalFallas = fallasPorModulo.reduce((acc, m) => acc + m.fallas, 0);
+  const totalCasos = fallasPorModulo.reduce((acc, m) => acc + m.fallas, 0);
+  const hayEjecucionesAgente = errorPorAgente.some(item => (item.total ?? 0) > 0);
 
   const getPrioridad = (porcentaje) => {
     if (porcentaje >= 30) return { label: 'Alta',          bg: '#fef2f2', color: '#E24B4A' };
@@ -45,7 +46,7 @@ export default function Metricas() {
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
           <div style={{ ...styles.row2, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
             <div style={styles.chartCard}>
-              <div style={styles.chartTitle}>Módulos con fallas recurrentes</div>
+              <div style={styles.chartTitle}>Tickets por módulo afectado</div>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart
                   data={[...fallasPorModulo].sort((a, b) => b.fallas - a.fallas)}
@@ -53,9 +54,9 @@ export default function Metricas() {
                   margin={{ top: 0, right: isMobile ? 10 : 30, left: 10, bottom: 25 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" label={{ value: 'Fallas', position: 'insideBottom', offset: -15 }} tick={{ fill: '#64748b' }} />
+                  <XAxis type="number" label={{ value: 'Tickets', position: 'insideBottom', offset: -15 }} tick={{ fill: '#64748b' }} />
                   <YAxis type="category" dataKey="modulo" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#64748b' }} />
-                  <Tooltip formatter={(value) => [`${value} fallas`, 'Cantidad']} />
+                  <Tooltip formatter={(value) => [`${value} tickets`, 'Cantidad']} />
                   <Bar dataKey="fallas" radius={[0, 6, 6, 0]}>
                     {[...fallasPorModulo].sort((a, b) => b.fallas - a.fallas).map((entry, index, arr) => (
                       <Cell key={index} fill={
@@ -70,41 +71,57 @@ export default function Metricas() {
 
             <div style={styles.chartCard}>
               <div style={styles.chartTitle}>Tasa de error por agente (%)</div>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={[...errorPorAgente].sort((a, b) => b.tasa - a.tasa)}
-                  layout="vertical"
-                  margin={{ top: 0, right: isMobile ? 10 : 30, left: 10, bottom: 25 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" label={{ value: '%', position: 'insideBottom', offset: -15 }} tick={{ fill: '#64748b' }} />
-                  <YAxis type="category" dataKey="agente" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#64748b' }} />
-                  <Tooltip formatter={(value) => [`${value}%`, 'Tasa de error']} />
-                  <Bar dataKey="tasa" radius={[0, 6, 6, 0]}>
-                    {[...errorPorAgente].sort((a, b) => b.tasa - a.tasa).map((entry, index) => (
-                      <Cell key={index} fill={entry.tasa > 10 ? '#E24B4A' : entry.tasa > 5 ? '#BA7517' : '#1D9E75'} />
+              {hayEjecucionesAgente ? (
+                <>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart
+                      data={[...errorPorAgente].sort((a, b) => b.tasa - a.tasa)}
+                      layout="vertical"
+                      margin={{ top: 0, right: isMobile ? 10 : 30, left: 10, bottom: 25 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                      <XAxis type="number" domain={[0, 100]} label={{ value: '%', position: 'insideBottom', offset: -15 }} tick={{ fill: '#64748b' }} />
+                      <YAxis type="category" dataKey="agente" width={isMobile ? 70 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#64748b' }} />
+                      <Tooltip formatter={(value) => [`${value}%`, 'Tasa de error']} />
+                      <Bar dataKey="tasa" radius={[0, 6, 6, 0]}>
+                        {[...errorPorAgente].sort((a, b) => b.tasa - a.tasa).map((entry, index) => (
+                          <Cell key={index} fill={entry.tasa > 10 ? '#E24B4A' : entry.tasa > 5 ? '#BA7517' : '#1D9E75'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <div style={styles.agentRows}>
+                    {[...errorPorAgente].sort((a, b) => b.tasa - a.tasa || (b.total ?? 0) - (a.total ?? 0)).map((item) => (
+                      <div key={item.agente} style={styles.agentRow}>
+                        <span style={styles.agentName}>{item.agente}</span>
+                        <span style={styles.agentStat}>{item.total ?? 0} ejec.</span>
+                        <span style={styles.agentStat}>{item.fallas ?? 0} fallas</span>
+                        <span style={{ ...styles.agentRate, color: item.tasa > 0 ? '#E24B4A' : '#1D9E75' }}>{item.tasa}%</span>
+                      </div>
                     ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                  </div>
+                </>
+              ) : (
+                <div style={styles.emptyMsg}>Todavia no hay ejecuciones de agentes registradas.</div>
+              )}
             </div>
           </div>
 
           <div style={styles.chartCard}>
-            <div style={styles.chartTitle}>Casos que requieren análisis de causa raíz</div>
+            <div style={styles.chartTitle}>Distribución por sistema afectado</div>
             <div style={styles.tableWrapper}>
               <table style={styles.table}>
                 <thead>
                   <tr>
                     <th style={styles.th}>Módulo</th>
-                    <th style={{ ...styles.th, textAlign: 'center' }}>Fallas</th>
+                    <th style={{ ...styles.th, textAlign: 'center' }}>Tickets</th>
                     <th style={{ ...styles.th, textAlign: 'center' }}>Representación</th>
                     <th style={{ ...styles.th, textAlign: 'center' }}>Prioridad</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[...fallasPorModulo].sort((a, b) => b.fallas - a.fallas).map((item, index) => {
-                    const porcentaje = totalFallas > 0 ? (item.fallas / totalFallas) * 100 : 0;
+                    const porcentaje = totalCasos > 0 ? (item.fallas / totalCasos) * 100 : 0;
                     const prioridad = getPrioridad(porcentaje);
                     const esSecundario = porcentaje < 5;
                     return (
@@ -219,5 +236,42 @@ const styles = {
     borderRadius: '20px',
     fontWeight: '500',
     whiteSpace: 'nowrap',
+  },
+  agentRows: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    marginTop: '8px',
+  },
+  agentRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr auto auto auto',
+    gap: '10px',
+    alignItems: 'center',
+    padding: '8px 10px',
+    background: '#f8fafc',
+    borderRadius: '8px',
+    border: '1px solid #f1f5f9',
+  },
+  agentName: {
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#1A3A5C',
+  },
+  agentStat: {
+    fontSize: '11px',
+    color: '#64748b',
+    whiteSpace: 'nowrap',
+  },
+  agentRate: {
+    fontSize: '12px',
+    fontWeight: '800',
+    whiteSpace: 'nowrap',
+  },
+  emptyMsg: {
+    fontSize: '13px',
+    color: '#94a3b8',
+    textAlign: 'center',
+    padding: '32px 12px',
   },
 };

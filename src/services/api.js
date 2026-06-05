@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { mockTickets, mockMetricas, mockMetricasCalidad } from './mockData';
 
-const USE_MOCK = true; // ← cambiar a false cuando el back esté listo
+const USE_MOCK = false;
 const URL_BACK = process.env.REACT_APP_API_URL || '/api';
 
 const getAuthHeaders = () => ({
@@ -17,6 +17,7 @@ export const getTickets = (filtros = {}) => {
   const params = new URLSearchParams();
   if (filtros.estado && filtros.estado !== 'Todos')   params.append('estado', filtros.estado);
   if (filtros.prioridad && filtros.prioridad !== 'Todas') params.append('prioridad', filtros.prioridad);
+  if (filtros.sistema && filtros.sistema !== 'Todos') params.append('sistema', filtros.sistema);
   if (filtros.desde)  params.append('desde', filtros.desde);
   if (filtros.hasta)  params.append('hasta', filtros.hasta);
 

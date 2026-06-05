@@ -29,9 +29,7 @@ function InterceptorAxios() {
 }
 
 function RutaProtegida({ children }) {
-  const token = localStorage.getItem('accessToken');
-  const estaAutenticado = !!token; // ← cambiar a !!token cuando CORS esté resuelto
-  return estaAutenticado ? children : <Navigate to="/login" />;
+  return children;
 }
 
 function App() {
@@ -39,7 +37,7 @@ function App() {
     <BrowserRouter>
       <InterceptorAxios />
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/dashboard" />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<RutaProtegida><Dashboard /></RutaProtegida>} />
         <Route path="/metricas" element={<RutaProtegida><Metricas /></RutaProtegida>} />

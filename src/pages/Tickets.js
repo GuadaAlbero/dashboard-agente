@@ -12,9 +12,19 @@ const PRIORIDAD_LABEL_ES = {
   'Critical': 'Crítico', 'High': 'Alto', 'Moderate': 'Moderado', 'Low': 'Bajo',
 };
 
+const SISTEMA_LABEL_ES = {
+  turnera: 'Turnera',
+  usuarios: 'Usuarios',
+  pedidos: 'Pedidos',
+  pagos: 'Pagos',
+  catalogo: 'Catalogo',
+  stock: 'Stock',
+  'sin clasificar': 'Sin clasificar',
+};
+
 const esResuelto   = (t) => ['Resolved', 'Closed'].includes(t.stateLabel);
-const esNoResuelto = (t) => ['New', 'In Progress', 'On Hold'].includes(t.stateLabel);
-const esEscalado   = (t) => t.stateLabel === 'Escalado';
+const esEscalado   = (t) => t.assignmentGroup === 'Soporte Nivel 2';
+const esNoResuelto = (t) => !esEscalado(t) && ['New', 'In Progress', 'On Hold'].includes(t.stateLabel);
 
 const pesoPrioridad = { 'Critical': 1, 'High': 2, 'Moderate': 3, 'Low': 4 };
 const pesoEstado    = { 'New': 1, 'In Progress': 2, 'On Hold': 3, 'Resolved': 4, 'Closed': 5, 'Canceled': 6, 'Escalado': 7 };
@@ -42,6 +52,7 @@ export default function Tickets() {
   const [tickets, setTickets] = useState([]);
   const [filtroEstado, setFiltroEstado] = useState('Todos');
   const [filtroPrioridad, setFiltroPrioridad] = useState('Todas');
+  const [filtroSistema, setFiltroSistema] = useState('Todos');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
   const [orden, setOrden] = useState({ columna: 'openedAt', direccion: 'desc' });
@@ -58,7 +69,9 @@ export default function Tickets() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const estado = params.get('estado');
+    const sistema = params.get('sistema');
     if (estado) setFiltroEstado(estado);
+    if (sistema) setFiltroSistema(sistema);
   }, [location.search]);
 
   useEffect(() => {
@@ -75,6 +88,7 @@ export default function Tickets() {
   const limpiarFiltros = () => {
     setFiltroEstado('Todos');
     setFiltroPrioridad('Todas');
+    setFiltroSistema('Todos');
     setFiltroFechaDesde('');
     setFiltroFechaHasta('');
   };
@@ -94,6 +108,8 @@ export default function Tickets() {
 
   const toggleFila = (id) => setFilaExpandida(prev => prev === id ? null : id);
 
+  const estadoVisible = (ticket) => esEscalado(ticket) ? 'Escalado' : ticket.stateLabel;
+
   const ticketsFiltrados = tickets
     .filter(t => {
       if      (filtroEstado === 'noResueltos') { if (!esNoResuelto(t)) return false; }
@@ -101,6 +117,7 @@ export default function Tickets() {
       else if (filtroEstado === 'escalado')    { if (!esEscalado(t))   return false; }
       else if (filtroEstado !== 'Todos')       { if (t.stateLabel !== filtroEstado) return false; }
       if (filtroPrioridad !== 'Todas' && t.priorityLabel !== filtroPrioridad) return false;
+      if (filtroSistema !== 'Todos' && t.affectedSystem !== filtroSistema) return false;
       if (filtroFechaDesde && new Date(t.openedAt) < new Date(filtroFechaDesde)) return false;
       if (filtroFechaHasta && new Date(t.openedAt) > new Date(filtroFechaHasta + 'T23:59:59')) return false;
       return true;
@@ -109,7 +126,7 @@ export default function Tickets() {
       const { columna, direccion } = orden;
       let valA, valB;
       if (columna === 'priorityLabel') { valA = pesoPrioridad[a.priorityLabel] ?? 99; valB = pesoPrioridad[b.priorityLabel] ?? 99; }
-      else if (columna === 'stateLabel') { valA = pesoEstado[a.stateLabel] ?? 99; valB = pesoEstado[b.stateLabel] ?? 99; }
+      else if (columna === 'stateLabel') { valA = pesoEstado[estadoVisible(a)] ?? 99; valB = pesoEstado[estadoVisible(b)] ?? 99; }
       else if (columna === 'openedAt' || columna === 'updatedAt') { valA = new Date(a[columna]); valB = new Date(b[columna]); }
       else { valA = a[columna]?.toLowerCase?.() ?? ''; valB = b[columna]?.toLowerCase?.() ?? ''; }
       if (valA < valB) return direccion === 'asc' ? -1 : 1;
@@ -117,7 +134,7 @@ export default function Tickets() {
       return 0;
     });
 
-  const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroFechaDesde || filtroFechaHasta;
+  const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroSistema !== 'Todos' || filtroFechaDesde || filtroFechaHasta;
   const labelFiltroEstado =
     filtroEstado === 'noResueltos' ? 'No resueltos' :
     filtroEstado === 'resueltos'   ? 'Resueltos' :
@@ -125,7 +142,7 @@ export default function Tickets() {
     filtroEstado !== 'Todos'       ? (ESTADO_LABEL_ES[filtroEstado] ?? filtroEstado) : '';
 
   const cantFiltrosActivos = [
-    filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', !!filtroFechaDesde, !!filtroFechaHasta,
+    filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', filtroSistema !== 'Todos', !!filtroFechaDesde, !!filtroFechaHasta,
   ].filter(Boolean).length;
 
   const filtrosJSX = (
@@ -151,6 +168,19 @@ export default function Tickets() {
           <option value="High">Alto</option>
           <option value="Moderate">Moderado</option>
           <option value="Low">Bajo</option>
+        </select>
+      </div>
+      <div style={styles.filtroGrupo}>
+        <label style={styles.filtroLabel}>Sistema</label>
+        <select style={styles.select} value={filtroSistema} onChange={e => setFiltroSistema(e.target.value)}>
+          <option value="Todos">Todos</option>
+          <option value="turnera">Turnera</option>
+          <option value="usuarios">Usuarios</option>
+          <option value="pedidos">Pedidos</option>
+          <option value="pagos">Pagos</option>
+          <option value="catalogo">Catalogo</option>
+          <option value="stock">Stock</option>
+          <option value="sin clasificar">Sin clasificar</option>
         </select>
       </div>
       <div style={styles.filtroGrupo}>
@@ -194,6 +224,7 @@ export default function Tickets() {
             <div style={styles.tableInfo}>
               Mostrando {ticketsFiltrados.length} de {tickets.length} incidentes
               {filtroEstado !== 'Todos' && <span style={{ color: '#2563A8', marginLeft: '8px' }}>— {labelFiltroEstado}</span>}
+              {filtroSistema !== 'Todos' && <span style={{ color: '#2563A8', marginLeft: '8px' }}>— {SISTEMA_LABEL_ES[filtroSistema] ?? filtroSistema}</span>}
             </div>
             <div style={styles.tableWrapper}>
               <table style={styles.table}>
@@ -240,10 +271,10 @@ export default function Tickets() {
                               ...styles.badge,
                               fontSize: isMobile ? '10px' : '11px',
                               padding: isMobile ? '2px 6px' : '3px 10px',
-                              background: colorEstado[ticket.stateLabel]?.bg || '#f8fafc',
-                              color: colorEstado[ticket.stateLabel]?.color || '#64748b',
+                              background: colorEstado[estadoVisible(ticket)]?.bg || '#f8fafc',
+                              color: colorEstado[estadoVisible(ticket)]?.color || '#64748b',
                             }}>
-                              {ESTADO_LABEL_ES[ticket.stateLabel] ?? ticket.stateLabel}
+                              {esEscalado(ticket) ? 'Escalado a 2do nivel' : (ESTADO_LABEL_ES[ticket.stateLabel] ?? ticket.stateLabel)}
                             </span>
                           </td>
                           <td style={{ ...styles.td, padding: tdPadding, textAlign: 'center' }}>

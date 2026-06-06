@@ -5,7 +5,8 @@ const USE_MOCK = false;
 const URL_BACK = process.env.REACT_APP_API_URL || '/api';
 
 const getAuthHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+  Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+  'ngrok-skip-browser-warning': 'true'
 });
 
 // ── TICKETS ──────────────────────────────────────────────────────

@@ -46,6 +46,12 @@ const colorPrioridad = {
   'Low':      { bg: '#f0fdf4', color: '#1D9E75' },
 };
 
+const normalizarTexto = (valor) =>
+  String(valor ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
 export default function Tickets() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -55,6 +61,7 @@ export default function Tickets() {
   const [filtroSistema, setFiltroSistema] = useState('Todos');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+  const [busqueda, setBusqueda] = useState('');
   const [orden, setOrden] = useState({ columna: 'openedAt', direccion: 'desc' });
   const [filaExpandida, setFilaExpandida] = useState(null);
   const [bottomSheetAbierto, setBottomSheetAbierto] = useState(false);
@@ -91,6 +98,7 @@ export default function Tickets() {
     setFiltroSistema('Todos');
     setFiltroFechaDesde('');
     setFiltroFechaHasta('');
+    setBusqueda('');
   };
 
   const toggleOrden = (columna) => {
@@ -120,6 +128,26 @@ export default function Tickets() {
       if (filtroSistema !== 'Todos' && t.affectedSystem !== filtroSistema) return false;
       if (filtroFechaDesde && new Date(t.openedAt) < new Date(filtroFechaDesde)) return false;
       if (filtroFechaHasta && new Date(t.openedAt) > new Date(filtroFechaHasta + 'T23:59:59')) return false;
+      if (busqueda.trim()) {
+        const query = normalizarTexto(busqueda);
+        const textoTicket = normalizarTexto([
+          t.number,
+          t.title,
+          t.description,
+          t.stateLabel,
+          ESTADO_LABEL_ES[t.stateLabel],
+          t.priorityLabel,
+          PRIORIDAD_LABEL_ES[t.priorityLabel],
+          t.affectedSystem,
+          SISTEMA_LABEL_ES[t.affectedSystem],
+          t.assignmentGroup,
+          t.createdByName,
+          t.createdByEmail,
+          t.sysId,
+        ].filter(Boolean).join(' '));
+
+        if (!textoTicket.includes(query)) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -134,7 +162,7 @@ export default function Tickets() {
       return 0;
     });
 
-  const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroSistema !== 'Todos' || filtroFechaDesde || filtroFechaHasta;
+  const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroSistema !== 'Todos' || filtroFechaDesde || filtroFechaHasta || busqueda.trim();
   const labelFiltroEstado =
     filtroEstado === 'noResueltos' ? 'No resueltos' :
     filtroEstado === 'resueltos'   ? 'Resueltos' :
@@ -142,7 +170,7 @@ export default function Tickets() {
     filtroEstado !== 'Todos'       ? (ESTADO_LABEL_ES[filtroEstado] ?? filtroEstado) : '';
 
   const cantFiltrosActivos = [
-    filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', filtroSistema !== 'Todos', !!filtroFechaDesde, !!filtroFechaHasta,
+    filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', filtroSistema !== 'Todos', !!filtroFechaDesde, !!filtroFechaHasta, !!busqueda.trim(),
   ].filter(Boolean).length;
 
   const filtrosJSX = (
@@ -214,6 +242,22 @@ export default function Tickets() {
         </div>
 
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
+          <div style={styles.searchCard}>
+            <label style={styles.filtroLabel}>Buscar incidente</label>
+            <div style={styles.searchRow}>
+              <input
+                style={styles.searchInput}
+                type="search"
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                placeholder="Buscar por numero, titulo, estado, modulo, grupo, usuario o descripcion"
+              />
+              {busqueda && (
+                <button style={styles.btnLimpiarBusqueda} onClick={() => setBusqueda('')}>Limpiar</button>
+              )}
+            </div>
+          </div>
+
           {!isMobile && (
             <div style={styles.filtrosCard}>
               <div style={{ ...styles.filtrosRow, flexDirection: 'row' }}>{filtrosJSX}</div>
@@ -400,6 +444,43 @@ const styles = {
     borderRadius: '8px',
     padding: '16px 20px',
     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+  },
+  searchCard: {
+    background: 'white',
+    borderRadius: '8px',
+    padding: '14px 20px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  searchRow: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: '13px',
+    padding: '9px 12px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    outline: 'none',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    color: '#1A3A5C',
+  },
+  btnLimpiarBusqueda: {
+    fontSize: '12px',
+    padding: '9px 12px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    background: 'white',
+    color: '#64748b',
+    fontWeight: '600',
+    cursor: 'pointer',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    whiteSpace: 'nowrap',
   },
   filtrosRow: {
     display: 'flex',

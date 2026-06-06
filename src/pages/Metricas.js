@@ -8,6 +8,9 @@ export default function Metricas() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [fallasPorModulo, setFallasPorModulo] = useState([]);
   const [errorPorAgente, setErrorPorAgente] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState('');
+  const [chartKey, setChartKey] = useState(0);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -16,12 +19,48 @@ export default function Metricas() {
   }, []);
 
   useEffect(() => {
-    getMetricasCalidad()
-      .then(data => {
-        setFallasPorModulo(data.fallasPorModulo);
-        setErrorPorAgente(data.errorPorAgente);
-      })
-      .catch(err => console.error(err));
+    let activo = true;
+
+    const cargarMetricas = () => {
+      setCargando(true);
+      setErrorCarga('');
+
+      getMetricasCalidad()
+        .then(data => {
+          if (!activo) return;
+
+          setFallasPorModulo(Array.isArray(data?.fallasPorModulo) ? data.fallasPorModulo : []);
+          setErrorPorAgente(Array.isArray(data?.errorPorAgente) ? data.errorPorAgente : []);
+
+          requestAnimationFrame(() => {
+            window.dispatchEvent(new Event('resize'));
+            setChartKey(key => key + 1);
+          });
+        })
+        .catch(err => {
+          if (!activo) return;
+          console.error(err);
+          setErrorCarga('No pude cargar las metricas de calidad.');
+        })
+        .finally(() => {
+          if (activo) setCargando(false);
+        });
+    };
+
+    cargarMetricas();
+
+    const recargarSiVuelveElFoco = () => {
+      if (!document.hidden) cargarMetricas();
+    };
+
+    document.addEventListener('visibilitychange', recargarSiVuelveElFoco);
+    window.addEventListener('focus', cargarMetricas);
+
+    return () => {
+      activo = false;
+      document.removeEventListener('visibilitychange', recargarSiVuelveElFoco);
+      window.removeEventListener('focus', cargarMetricas);
+    };
   }, []);
 
   const totalCasos = fallasPorModulo.reduce((acc, m) => acc + m.fallas, 0);
@@ -44,10 +83,12 @@ export default function Metricas() {
         </div>
 
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
+          {errorCarga && <div style={styles.errorMsg}>{errorCarga}</div>}
+          {cargando && <div style={styles.loadingMsg}>Cargando metricas...</div>}
           <div style={{ ...styles.row2, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
             <div style={styles.chartCard}>
               <div style={styles.chartTitle}>Tickets por módulo afectado</div>
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer key={`modulos-${chartKey}`} width="100%" height={280}>
                 <BarChart
                   data={[...fallasPorModulo].sort((a, b) => b.fallas - a.fallas)}
                   layout="vertical"
@@ -57,7 +98,7 @@ export default function Metricas() {
                   <XAxis type="number" label={{ value: 'Tickets', position: 'insideBottom', offset: -15 }} tick={{ fill: '#64748b' }} />
                   <YAxis type="category" dataKey="modulo" width={isMobile ? 60 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#64748b' }} />
                   <Tooltip formatter={(value) => [`${value} tickets`, 'Cantidad']} />
-                  <Bar dataKey="fallas" radius={[0, 6, 6, 0]}>
+                  <Bar dataKey="fallas" minPointSize={2} radius={[0, 6, 6, 0]}>
                     {[...fallasPorModulo].sort((a, b) => b.fallas - a.fallas).map((entry, index, arr) => (
                       <Cell key={index} fill={
                         entry.fallas === Math.max(...arr.map(e => e.fallas)) ? '#E24B4A' :
@@ -73,7 +114,7 @@ export default function Metricas() {
               <div style={styles.chartTitle}>Tasa de error por agente (%)</div>
               {hayEjecucionesAgente ? (
                 <>
-                  <ResponsiveContainer width="100%" height={200}>
+                  <ResponsiveContainer key={`agentes-${chartKey}`} width="100%" height={200}>
                     <BarChart
                       data={[...errorPorAgente].sort((a, b) => b.tasa - a.tasa)}
                       layout="vertical"
@@ -83,7 +124,7 @@ export default function Metricas() {
                       <XAxis type="number" domain={[0, 100]} label={{ value: '%', position: 'insideBottom', offset: -15 }} tick={{ fill: '#64748b' }} />
                       <YAxis type="category" dataKey="agente" width={isMobile ? 70 : 160} tick={{ fontSize: isMobile ? 9 : 11, fill: '#64748b' }} />
                       <Tooltip formatter={(value) => [`${value}%`, 'Tasa de error']} />
-                      <Bar dataKey="tasa" radius={[0, 6, 6, 0]}>
+                      <Bar dataKey="tasa" minPointSize={2} radius={[0, 6, 6, 0]}>
                         {[...errorPorAgente].sort((a, b) => b.tasa - a.tasa).map((entry, index) => (
                           <Cell key={index} fill={entry.tasa > 10 ? '#E24B4A' : entry.tasa > 5 ? '#BA7517' : '#1D9E75'} />
                         ))}
@@ -273,5 +314,21 @@ const styles = {
     color: '#94a3b8',
     textAlign: 'center',
     padding: '32px 12px',
+  },
+  loadingMsg: {
+    fontSize: '12px',
+    color: '#64748b',
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    padding: '10px 12px',
+  },
+  errorMsg: {
+    fontSize: '12px',
+    color: '#991b1b',
+    background: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
+    padding: '10px 12px',
   },
 };

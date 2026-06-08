@@ -12,9 +12,19 @@ const PRIORIDAD_LABEL_ES = {
   'Critical': 'Crítico', 'High': 'Alto', 'Moderate': 'Moderado', 'Low': 'Bajo',
 };
 
+const SISTEMA_LABEL_ES = {
+  turnera: 'Turnera',
+  usuarios: 'Usuarios',
+  pedidos: 'Pedidos',
+  pagos: 'Pagos',
+  catalogo: 'Catalogo',
+  stock: 'Stock',
+  'sin clasificar': 'Sin clasificar',
+};
+
 const esResuelto   = (t) => ['Resolved', 'Closed'].includes(t.stateLabel);
-const esNoResuelto = (t) => ['New', 'In Progress', 'On Hold'].includes(t.stateLabel);
-const esEscalado   = (t) => t.stateLabel === 'Escalado';
+const esEscalado   = (t) => t.assignmentGroup === 'Soporte Nivel 2';
+const esNoResuelto = (t) => !esEscalado(t) && ['New', 'In Progress', 'On Hold'].includes(t.stateLabel);
 
 const pesoPrioridad = { 'Critical': 1, 'High': 2, 'Moderate': 3, 'Low': 4 };
 const pesoEstado    = { 'New': 1, 'In Progress': 2, 'On Hold': 3, 'Resolved': 4, 'Closed': 5, 'Canceled': 6, 'Escalado': 7 };
@@ -36,14 +46,22 @@ const colorPrioridad = {
   'Low':      { bg: '#f0fdf4', color: '#1D9E75' },
 };
 
+const normalizarTexto = (valor) =>
+  String(valor ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
 export default function Tickets() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [tickets, setTickets] = useState([]);
   const [filtroEstado, setFiltroEstado] = useState('Todos');
   const [filtroPrioridad, setFiltroPrioridad] = useState('Todas');
+  const [filtroSistema, setFiltroSistema] = useState('Todos');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+  const [busqueda, setBusqueda] = useState('');
   const [orden, setOrden] = useState({ columna: 'openedAt', direccion: 'desc' });
   const [filaExpandida, setFilaExpandida] = useState(null);
   const [bottomSheetAbierto, setBottomSheetAbierto] = useState(false);
@@ -58,7 +76,9 @@ export default function Tickets() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const estado = params.get('estado');
+    const sistema = params.get('sistema');
     if (estado) setFiltroEstado(estado);
+    if (sistema) setFiltroSistema(sistema);
   }, [location.search]);
 
   useEffect(() => {
@@ -75,8 +95,10 @@ export default function Tickets() {
   const limpiarFiltros = () => {
     setFiltroEstado('Todos');
     setFiltroPrioridad('Todas');
+    setFiltroSistema('Todos');
     setFiltroFechaDesde('');
     setFiltroFechaHasta('');
+    setBusqueda('');
   };
 
   const toggleOrden = (columna) => {
@@ -94,6 +116,8 @@ export default function Tickets() {
 
   const toggleFila = (id) => setFilaExpandida(prev => prev === id ? null : id);
 
+  const estadoVisible = (ticket) => esEscalado(ticket) ? 'Escalado' : ticket.stateLabel;
+
   const ticketsFiltrados = tickets
     .filter(t => {
       if      (filtroEstado === 'noResueltos') { if (!esNoResuelto(t)) return false; }
@@ -101,15 +125,36 @@ export default function Tickets() {
       else if (filtroEstado === 'escalado')    { if (!esEscalado(t))   return false; }
       else if (filtroEstado !== 'Todos')       { if (t.stateLabel !== filtroEstado) return false; }
       if (filtroPrioridad !== 'Todas' && t.priorityLabel !== filtroPrioridad) return false;
+      if (filtroSistema !== 'Todos' && t.affectedSystem !== filtroSistema) return false;
       if (filtroFechaDesde && new Date(t.openedAt) < new Date(filtroFechaDesde)) return false;
       if (filtroFechaHasta && new Date(t.openedAt) > new Date(filtroFechaHasta + 'T23:59:59')) return false;
+      if (busqueda.trim()) {
+        const query = normalizarTexto(busqueda);
+        const textoTicket = normalizarTexto([
+          t.number,
+          t.title,
+          t.description,
+          t.stateLabel,
+          ESTADO_LABEL_ES[t.stateLabel],
+          t.priorityLabel,
+          PRIORIDAD_LABEL_ES[t.priorityLabel],
+          t.affectedSystem,
+          SISTEMA_LABEL_ES[t.affectedSystem],
+          t.assignmentGroup,
+          t.createdByName,
+          t.createdByEmail,
+          t.sysId,
+        ].filter(Boolean).join(' '));
+
+        if (!textoTicket.includes(query)) return false;
+      }
       return true;
     })
     .sort((a, b) => {
       const { columna, direccion } = orden;
       let valA, valB;
       if (columna === 'priorityLabel') { valA = pesoPrioridad[a.priorityLabel] ?? 99; valB = pesoPrioridad[b.priorityLabel] ?? 99; }
-      else if (columna === 'stateLabel') { valA = pesoEstado[a.stateLabel] ?? 99; valB = pesoEstado[b.stateLabel] ?? 99; }
+      else if (columna === 'stateLabel') { valA = pesoEstado[estadoVisible(a)] ?? 99; valB = pesoEstado[estadoVisible(b)] ?? 99; }
       else if (columna === 'openedAt' || columna === 'updatedAt') { valA = new Date(a[columna]); valB = new Date(b[columna]); }
       else { valA = a[columna]?.toLowerCase?.() ?? ''; valB = b[columna]?.toLowerCase?.() ?? ''; }
       if (valA < valB) return direccion === 'asc' ? -1 : 1;
@@ -117,7 +162,7 @@ export default function Tickets() {
       return 0;
     });
 
-  const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroFechaDesde || filtroFechaHasta;
+  const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroSistema !== 'Todos' || filtroFechaDesde || filtroFechaHasta || busqueda.trim();
   const labelFiltroEstado =
     filtroEstado === 'noResueltos' ? 'No resueltos' :
     filtroEstado === 'resueltos'   ? 'Resueltos' :
@@ -125,7 +170,7 @@ export default function Tickets() {
     filtroEstado !== 'Todos'       ? (ESTADO_LABEL_ES[filtroEstado] ?? filtroEstado) : '';
 
   const cantFiltrosActivos = [
-    filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', !!filtroFechaDesde, !!filtroFechaHasta,
+    filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', filtroSistema !== 'Todos', !!filtroFechaDesde, !!filtroFechaHasta, !!busqueda.trim(),
   ].filter(Boolean).length;
 
   const filtrosJSX = (
@@ -151,6 +196,19 @@ export default function Tickets() {
           <option value="High">Alto</option>
           <option value="Moderate">Moderado</option>
           <option value="Low">Bajo</option>
+        </select>
+      </div>
+      <div style={styles.filtroGrupo}>
+        <label style={styles.filtroLabel}>Sistema</label>
+        <select style={styles.select} value={filtroSistema} onChange={e => setFiltroSistema(e.target.value)}>
+          <option value="Todos">Todos</option>
+          <option value="turnera">Turnera</option>
+          <option value="usuarios">Usuarios</option>
+          <option value="pedidos">Pedidos</option>
+          <option value="pagos">Pagos</option>
+          <option value="catalogo">Catalogo</option>
+          <option value="stock">Stock</option>
+          <option value="sin clasificar">Sin clasificar</option>
         </select>
       </div>
       <div style={styles.filtroGrupo}>
@@ -184,6 +242,22 @@ export default function Tickets() {
         </div>
 
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
+          <div style={styles.searchCard}>
+            <label style={styles.filtroLabel}>Buscar incidente</label>
+            <div style={styles.searchRow}>
+              <input
+                style={styles.searchInput}
+                type="search"
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                placeholder="Buscar por numero, titulo, estado, modulo, grupo, usuario o descripcion"
+              />
+              {busqueda && (
+                <button style={styles.btnLimpiarBusqueda} onClick={() => setBusqueda('')}>Limpiar</button>
+              )}
+            </div>
+          </div>
+
           {!isMobile && (
             <div style={styles.filtrosCard}>
               <div style={{ ...styles.filtrosRow, flexDirection: 'row' }}>{filtrosJSX}</div>
@@ -194,6 +268,7 @@ export default function Tickets() {
             <div style={styles.tableInfo}>
               Mostrando {ticketsFiltrados.length} de {tickets.length} incidentes
               {filtroEstado !== 'Todos' && <span style={{ color: '#2563A8', marginLeft: '8px' }}>— {labelFiltroEstado}</span>}
+              {filtroSistema !== 'Todos' && <span style={{ color: '#2563A8', marginLeft: '8px' }}>— {SISTEMA_LABEL_ES[filtroSistema] ?? filtroSistema}</span>}
             </div>
             <div style={styles.tableWrapper}>
               <table style={styles.table}>
@@ -240,10 +315,10 @@ export default function Tickets() {
                               ...styles.badge,
                               fontSize: isMobile ? '10px' : '11px',
                               padding: isMobile ? '2px 6px' : '3px 10px',
-                              background: colorEstado[ticket.stateLabel]?.bg || '#f8fafc',
-                              color: colorEstado[ticket.stateLabel]?.color || '#64748b',
+                              background: colorEstado[estadoVisible(ticket)]?.bg || '#f8fafc',
+                              color: colorEstado[estadoVisible(ticket)]?.color || '#64748b',
                             }}>
-                              {ESTADO_LABEL_ES[ticket.stateLabel] ?? ticket.stateLabel}
+                              {esEscalado(ticket) ? 'Escalado a 2do nivel' : (ESTADO_LABEL_ES[ticket.stateLabel] ?? ticket.stateLabel)}
                             </span>
                           </td>
                           <td style={{ ...styles.td, padding: tdPadding, textAlign: 'center' }}>
@@ -369,6 +444,43 @@ const styles = {
     borderRadius: '8px',
     padding: '16px 20px',
     boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+  },
+  searchCard: {
+    background: 'white',
+    borderRadius: '8px',
+    padding: '14px 20px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  searchRow: {
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: '13px',
+    padding: '9px 12px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    outline: 'none',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    color: '#1A3A5C',
+  },
+  btnLimpiarBusqueda: {
+    fontSize: '12px',
+    padding: '9px 12px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    background: 'white',
+    color: '#64748b',
+    fontWeight: '600',
+    cursor: 'pointer',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    whiteSpace: 'nowrap',
   },
   filtrosRow: {
     display: 'flex',

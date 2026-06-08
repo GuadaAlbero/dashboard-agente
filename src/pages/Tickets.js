@@ -13,13 +13,36 @@ const PRIORIDAD_LABEL_ES = {
 };
 
 const SISTEMA_LABEL_ES = {
-  turnera: 'Turnera',
-  usuarios: 'Usuarios',
-  pedidos: 'Pedidos',
+  acceso: 'Acceso',
+  socios: 'Socios',
+  turnos: 'Turnos',
+  profesores: 'Profesores',
   pagos: 'Pagos',
-  catalogo: 'Catalogo',
-  stock: 'Stock',
+  disponibilidad: 'Disponibilidad',
+  clases: 'Clases',
+  turnera: 'Turnos',
+  usuarios: 'Acceso',
   'sin clasificar': 'Sin clasificar',
+};
+
+const inferirSistemaPorTexto = (ticket) => {
+  const texto = normalizarTexto(`${ticket?.title ?? ''} ${ticket?.description ?? ''}`);
+  if (/(credencial|login|logue|sesion|contrasena|password|acceso)/.test(texto)) return 'acceso';
+  if (/(pago|pague|abone|credito|creditos|me dieron|me cargaron|menos clases|tarjeta|debito|cobro|cargo)/.test(texto)) return 'pagos';
+  if (/(profesor|instructor)/.test(texto)) return 'profesores';
+  if (/(cupo|cupos|completo|disponibilidad|lugares)/.test(texto)) return 'disponibilidad';
+  if (/(turno|turnos|reserva|reservas|turnera)/.test(texto)) return 'turnos';
+  if (/(clase|clases|horario|agenda|calendario)/.test(texto)) return 'clases';
+  if (/(socio|perfil|registrado)/.test(texto)) return 'socios';
+  return '';
+};
+
+const normalizarSistema = (valor, ticket = null) => {
+  const sistema = normalizarTexto(valor);
+  if (sistema === 'turnera' || sistema === 'usuarios' || sistema === 'usuario') {
+    return inferirSistemaPorTexto(ticket) || (sistema === 'turnera' ? 'turnos' : 'acceso');
+  }
+  return sistema;
 };
 
 const esResuelto   = (t) => ['Resolved', 'Closed'].includes(t.stateLabel);
@@ -125,7 +148,7 @@ export default function Tickets() {
       else if (filtroEstado === 'escalado')    { if (!esEscalado(t))   return false; }
       else if (filtroEstado !== 'Todos')       { if (t.stateLabel !== filtroEstado) return false; }
       if (filtroPrioridad !== 'Todas' && t.priorityLabel !== filtroPrioridad) return false;
-      if (filtroSistema !== 'Todos' && t.affectedSystem !== filtroSistema) return false;
+      if (filtroSistema !== 'Todos' && normalizarSistema(t.affectedSystem, t) !== filtroSistema) return false;
       if (filtroFechaDesde && new Date(t.openedAt) < new Date(filtroFechaDesde)) return false;
       if (filtroFechaHasta && new Date(t.openedAt) > new Date(filtroFechaHasta + 'T23:59:59')) return false;
       if (busqueda.trim()) {
@@ -138,8 +161,8 @@ export default function Tickets() {
           ESTADO_LABEL_ES[t.stateLabel],
           t.priorityLabel,
           PRIORIDAD_LABEL_ES[t.priorityLabel],
-          t.affectedSystem,
-          SISTEMA_LABEL_ES[t.affectedSystem],
+          normalizarSistema(t.affectedSystem, t),
+          SISTEMA_LABEL_ES[normalizarSistema(t.affectedSystem, t)],
           t.assignmentGroup,
           t.createdByName,
           t.createdByEmail,
@@ -202,12 +225,13 @@ export default function Tickets() {
         <label style={styles.filtroLabel}>Sistema</label>
         <select style={styles.select} value={filtroSistema} onChange={e => setFiltroSistema(e.target.value)}>
           <option value="Todos">Todos</option>
-          <option value="turnera">Turnera</option>
-          <option value="usuarios">Usuarios</option>
-          <option value="pedidos">Pedidos</option>
+          <option value="acceso">Acceso</option>
+          <option value="socios">Socios</option>
+          <option value="turnos">Turnos</option>
+          <option value="profesores">Profesores</option>
           <option value="pagos">Pagos</option>
-          <option value="catalogo">Catalogo</option>
-          <option value="stock">Stock</option>
+          <option value="disponibilidad">Disponibilidad</option>
+          <option value="clases">Clases</option>
           <option value="sin clasificar">Sin clasificar</option>
         </select>
       </div>

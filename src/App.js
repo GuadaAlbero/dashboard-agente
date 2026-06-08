@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Metricas from './pages/Metricas';
 import Tickets from './pages/Tickets';
 
+const SKIP_LOGIN = process.env.REACT_APP_SKIP_LOGIN === 'true';
+
 function InterceptorAxios() {
   const navigate = useNavigate();
 
@@ -14,7 +16,7 @@ function InterceptorAxios() {
     const interceptor = axios.interceptors.response.use(
       res => res,
       err => {
-        if (err.response?.status === 401) {
+        if (!SKIP_LOGIN && err.response?.status === 401) {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('userEmail');
           navigate('/login');

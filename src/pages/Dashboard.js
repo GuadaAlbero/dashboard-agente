@@ -36,6 +36,8 @@ export default function Dashboard() {
   }, []);
 
   const total = metricasBack.ingresados || 1;
+  const esEscalado = (ticket) => ticket.assignmentGroup === 'Soporte Nivel 2';
+  const estadoVisible = (ticket) => esEscalado(ticket) ? 'Escalado' : ticket.stateLabel;
 
   const metricas = [
     { nombre: 'Ingresados',            incidentes: metricasBack.ingresados,  fill: '#2563A8', filtro: null },
@@ -152,10 +154,10 @@ export default function Dashboard() {
                       <span style={styles.ticketTitle}>{t.title}</span>
                       <span style={{
                         ...styles.badge,
-                        background: colorEstado[t.stateLabel]?.bg || '#f8fafc',
-                        color: colorEstado[t.stateLabel]?.color || '#64748b',
+                        background: colorEstado[estadoVisible(t)]?.bg || '#f8fafc',
+                        color: colorEstado[estadoVisible(t)]?.color || '#64748b',
                       }}>
-                        {estadoES[t.stateLabel] ?? t.stateLabel}
+                        {esEscalado(t) ? 'Escalado a 2do nivel' : (estadoES[t.stateLabel] ?? t.stateLabel)}
                       </span>
                     </div>
                   ))

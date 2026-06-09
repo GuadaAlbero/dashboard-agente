@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { getTickets } from '../services/api';
@@ -9,47 +9,10 @@ const ESTADO_LABEL_ES = {
 };
 
 const PRIORIDAD_LABEL_ES = {
-  'Critical': 'Crítico', 'High': 'Alto', 'Moderate': 'Moderado', 'Low': 'Bajo',
+  'High': 'Alta', 'Moderate': 'Moderada', 'Low': 'Baja',
 };
 
-const SISTEMA_LABEL_ES = {
-  acceso: 'Acceso',
-  socios: 'Socios',
-  turnos: 'Turnos',
-  profesores: 'Profesores',
-  pagos: 'Pagos',
-  disponibilidad: 'Disponibilidad',
-  clases: 'Clases',
-  turnera: 'Turnos',
-  usuarios: 'Acceso',
-  'sin clasificar': 'Sin clasificar',
-};
-
-const inferirSistemaPorTexto = (ticket) => {
-  const texto = normalizarTexto(`${ticket?.title ?? ''} ${ticket?.description ?? ''}`);
-  if (/(credencial|login|logue|sesion|contrasena|password|acceso)/.test(texto)) return 'acceso';
-  if (/(pago|pague|abone|credito|creditos|me dieron|me cargaron|menos clases|tarjeta|debito|cobro|cargo)/.test(texto)) return 'pagos';
-  if (/(profesor|instructor)/.test(texto)) return 'profesores';
-  if (/(cupo|cupos|completo|disponibilidad|lugares)/.test(texto)) return 'disponibilidad';
-  if (/(turno|turnos|reserva|reservas|turnera)/.test(texto)) return 'turnos';
-  if (/(clase|clases|horario|agenda|calendario)/.test(texto)) return 'clases';
-  if (/(socio|perfil|registrado)/.test(texto)) return 'socios';
-  return '';
-};
-
-const normalizarSistema = (valor, ticket = null) => {
-  const sistema = normalizarTexto(valor);
-  if (sistema === 'turnera' || sistema === 'usuarios' || sistema === 'usuario') {
-    return inferirSistemaPorTexto(ticket) || (sistema === 'turnera' ? 'turnos' : 'acceso');
-  }
-  return sistema;
-};
-
-const esResuelto   = (t) => ['Resolved', 'Closed'].includes(t.stateLabel);
-const esEscalado   = (t) => t.assignmentGroup === 'Soporte Nivel 2';
-const esNoResuelto = (t) => !esEscalado(t) && ['New', 'In Progress', 'On Hold'].includes(t.stateLabel);
-
-const pesoPrioridad = { 'Critical': 1, 'High': 2, 'Moderate': 3, 'Low': 4 };
+const pesoPrioridad = { 'High': 1, 'Moderate': 2, 'Low': 3 };
 const pesoEstado    = { 'New': 1, 'In Progress': 2, 'On Hold': 3, 'Resolved': 4, 'Closed': 5, 'Canceled': 6, 'Escalado': 7 };
 
 const colorEstado = {
@@ -63,25 +26,18 @@ const colorEstado = {
 };
 
 const colorPrioridad = {
-  'Critical': { bg: '#fef2f2', color: '#E24B4A' },
-  'High':     { bg: '#fff7ed', color: '#BA7517' },
-  'Moderate': { bg: '#eff6ff', color: '#2563A8' },
+  'High':     { bg: '#fef2f2', color: '#E24B4A' },
+  'Moderate': { bg: '#fff7ed', color: '#BA7517' },
   'Low':      { bg: '#f0fdf4', color: '#1D9E75' },
 };
-
-const normalizarTexto = (valor) =>
-  String(valor ?? '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
 
 export default function Tickets() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [tickets, setTickets] = useState([]);
+  const [totalTickets, setTotalTickets] = useState(0);
   const [filtroEstado, setFiltroEstado] = useState('Todos');
   const [filtroPrioridad, setFiltroPrioridad] = useState('Todas');
-  const [filtroSistema, setFiltroSistema] = useState('Todos');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
   const [busqueda, setBusqueda] = useState('');
@@ -99,26 +55,38 @@ export default function Tickets() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const estado = params.get('estado');
-    const sistema = params.get('sistema');
     if (estado) setFiltroEstado(estado);
-    if (sistema) setFiltroSistema(sistema);
   }, [location.search]);
 
-  useEffect(() => {
-    const fetchTickets = () => {
-      getTickets()
-        .then(data => setTickets(data))
-        .catch(err => console.error(err));
+  const fetchTickets = useCallback(() => {
+    const filtros = {
+      estado: filtroEstado,
+      prioridad: filtroPrioridad,
+      desde: filtroFechaDesde,
+      hasta: filtroFechaHasta,
+      busqueda,
     };
+    getTickets(filtros)
+      .then(data => setTickets(data))
+      .catch(err => console.error(err));
+  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, busqueda]);
+
+  // Cargar total sin filtros para el contador
+  useEffect(() => {
+    getTickets()
+      .then(data => setTotalTickets(data.length))
+      .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => {
     fetchTickets();
     const intervalo = setInterval(fetchTickets, 30000);
     return () => clearInterval(intervalo);
-  }, []);
+  }, [fetchTickets]);
 
   const limpiarFiltros = () => {
     setFiltroEstado('Todos');
     setFiltroPrioridad('Todas');
-    setFiltroSistema('Todos');
     setFiltroFechaDesde('');
     setFiltroFechaHasta('');
     setBusqueda('');
@@ -139,53 +107,20 @@ export default function Tickets() {
 
   const toggleFila = (id) => setFilaExpandida(prev => prev === id ? null : id);
 
-  const estadoVisible = (ticket) => esEscalado(ticket) ? 'Escalado' : ticket.stateLabel;
+  const ticketsOrdenados = [...tickets].sort((a, b) => {
+    const { columna, direccion } = orden;
+    let valA, valB;
+    if (columna === 'priorityLabel') { valA = pesoPrioridad[a.priorityLabel] ?? 99; valB = pesoPrioridad[b.priorityLabel] ?? 99; }
+    else if (columna === 'stateLabel') { valA = pesoEstado[a.stateLabel] ?? 99; valB = pesoEstado[b.stateLabel] ?? 99; }
+    else if (columna === 'openedAt' || columna === 'updatedAt') { valA = new Date(a[columna]); valB = new Date(b[columna]); }
+    else { valA = a[columna]?.toLowerCase?.() ?? ''; valB = b[columna]?.toLowerCase?.() ?? ''; }
+    if (valA < valB) return direccion === 'asc' ? -1 : 1;
+    if (valA > valB) return direccion === 'asc' ? 1 : -1;
+    return 0;
+  });
 
-  const ticketsFiltrados = tickets
-    .filter(t => {
-      if      (filtroEstado === 'noResueltos') { if (!esNoResuelto(t)) return false; }
-      else if (filtroEstado === 'resueltos')   { if (!esResuelto(t))   return false; }
-      else if (filtroEstado === 'escalado')    { if (!esEscalado(t))   return false; }
-      else if (filtroEstado !== 'Todos')       { if (t.stateLabel !== filtroEstado) return false; }
-      if (filtroPrioridad !== 'Todas' && t.priorityLabel !== filtroPrioridad) return false;
-      if (filtroSistema !== 'Todos' && normalizarSistema(t.affectedSystem, t) !== filtroSistema) return false;
-      if (filtroFechaDesde && new Date(t.openedAt) < new Date(filtroFechaDesde)) return false;
-      if (filtroFechaHasta && new Date(t.openedAt) > new Date(filtroFechaHasta + 'T23:59:59')) return false;
-      if (busqueda.trim()) {
-        const query = normalizarTexto(busqueda);
-        const textoTicket = normalizarTexto([
-          t.number,
-          t.title,
-          t.description,
-          t.stateLabel,
-          ESTADO_LABEL_ES[t.stateLabel],
-          t.priorityLabel,
-          PRIORIDAD_LABEL_ES[t.priorityLabel],
-          normalizarSistema(t.affectedSystem, t),
-          SISTEMA_LABEL_ES[normalizarSistema(t.affectedSystem, t)],
-          t.assignmentGroup,
-          t.createdByName,
-          t.createdByEmail,
-          t.sysId,
-        ].filter(Boolean).join(' '));
+  const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroFechaDesde || filtroFechaHasta || busqueda.trim();
 
-        if (!textoTicket.includes(query)) return false;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      const { columna, direccion } = orden;
-      let valA, valB;
-      if (columna === 'priorityLabel') { valA = pesoPrioridad[a.priorityLabel] ?? 99; valB = pesoPrioridad[b.priorityLabel] ?? 99; }
-      else if (columna === 'stateLabel') { valA = pesoEstado[estadoVisible(a)] ?? 99; valB = pesoEstado[estadoVisible(b)] ?? 99; }
-      else if (columna === 'openedAt' || columna === 'updatedAt') { valA = new Date(a[columna]); valB = new Date(b[columna]); }
-      else { valA = a[columna]?.toLowerCase?.() ?? ''; valB = b[columna]?.toLowerCase?.() ?? ''; }
-      if (valA < valB) return direccion === 'asc' ? -1 : 1;
-      if (valA > valB) return direccion === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-  const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroSistema !== 'Todos' || filtroFechaDesde || filtroFechaHasta || busqueda.trim();
   const labelFiltroEstado =
     filtroEstado === 'noResueltos' ? 'No resueltos' :
     filtroEstado === 'resueltos'   ? 'Resueltos' :
@@ -193,7 +128,7 @@ export default function Tickets() {
     filtroEstado !== 'Todos'       ? (ESTADO_LABEL_ES[filtroEstado] ?? filtroEstado) : '';
 
   const cantFiltrosActivos = [
-    filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', filtroSistema !== 'Todos', !!filtroFechaDesde, !!filtroFechaHasta, !!busqueda.trim(),
+    filtroEstado !== 'Todos', filtroPrioridad !== 'Todas', !!filtroFechaDesde, !!filtroFechaHasta, !!busqueda.trim(),
   ].filter(Boolean).length;
 
   const filtrosJSX = (
@@ -215,24 +150,9 @@ export default function Tickets() {
         <label style={styles.filtroLabel}>Prioridad</label>
         <select style={styles.select} value={filtroPrioridad} onChange={e => setFiltroPrioridad(e.target.value)}>
           <option value="Todas">Todas</option>
-          <option value="Critical">Crítico</option>
-          <option value="High">Alto</option>
-          <option value="Moderate">Moderado</option>
-          <option value="Low">Bajo</option>
-        </select>
-      </div>
-      <div style={styles.filtroGrupo}>
-        <label style={styles.filtroLabel}>Sistema</label>
-        <select style={styles.select} value={filtroSistema} onChange={e => setFiltroSistema(e.target.value)}>
-          <option value="Todos">Todos</option>
-          <option value="acceso">Acceso</option>
-          <option value="socios">Socios</option>
-          <option value="turnos">Turnos</option>
-          <option value="profesores">Profesores</option>
-          <option value="pagos">Pagos</option>
-          <option value="disponibilidad">Disponibilidad</option>
-          <option value="clases">Clases</option>
-          <option value="sin clasificar">Sin clasificar</option>
+          <option value="High">Alta</option>
+          <option value="Moderate">Moderada</option>
+          <option value="Low">Baja</option>
         </select>
       </div>
       <div style={styles.filtroGrupo}>
@@ -266,6 +186,8 @@ export default function Tickets() {
         </div>
 
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
+
+          {/* Buscador */}
           <div style={styles.searchCard}>
             <label style={styles.filtroLabel}>Buscar incidente</label>
             <div style={styles.searchRow}>
@@ -274,7 +196,7 @@ export default function Tickets() {
                 type="search"
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
-                placeholder="Buscar por numero, titulo, estado, modulo, grupo, usuario o descripcion"
+                placeholder="Buscar por número, título, estado o prioridad"
               />
               {busqueda && (
                 <button style={styles.btnLimpiarBusqueda} onClick={() => setBusqueda('')}>Limpiar</button>
@@ -282,17 +204,18 @@ export default function Tickets() {
             </div>
           </div>
 
+          {/* Filtros desktop */}
           {!isMobile && (
             <div style={styles.filtrosCard}>
               <div style={{ ...styles.filtrosRow, flexDirection: 'row' }}>{filtrosJSX}</div>
             </div>
           )}
 
+          {/* Tabla */}
           <div style={styles.tableCard}>
             <div style={styles.tableInfo}>
-              Mostrando {ticketsFiltrados.length} de {tickets.length} incidentes
+              Mostrando {tickets.length} de {totalTickets} incidentes
               {filtroEstado !== 'Todos' && <span style={{ color: '#2563A8', marginLeft: '8px' }}>— {labelFiltroEstado}</span>}
-              {filtroSistema !== 'Todos' && <span style={{ color: '#2563A8', marginLeft: '8px' }}>— {SISTEMA_LABEL_ES[filtroSistema] ?? filtroSistema}</span>}
             </div>
             <div style={styles.tableWrapper}>
               <table style={styles.table}>
@@ -312,14 +235,14 @@ export default function Tickets() {
                   </tr>
                 </thead>
                 <tbody>
-                  {ticketsFiltrados.length === 0 ? (
+                  {ticketsOrdenados.length === 0 ? (
                     <tr>
                       <td colSpan={isMobile ? 5 : 6} style={{ ...styles.td, textAlign: 'center', color: '#94a3b8', padding: '32px' }}>
                         No hay incidentes que coincidan con los filtros.
                       </td>
                     </tr>
                   ) : (
-                    ticketsFiltrados.map((ticket, index) => (
+                    ticketsOrdenados.map((ticket, index) => (
                       <React.Fragment key={ticket.id}>
                         <tr style={index % 2 === 0 ? styles.trEven : styles.trOdd} onClick={() => isMobile && toggleFila(ticket.id)}>
                           {isMobile && (
@@ -339,10 +262,10 @@ export default function Tickets() {
                               ...styles.badge,
                               fontSize: isMobile ? '10px' : '11px',
                               padding: isMobile ? '2px 6px' : '3px 10px',
-                              background: colorEstado[estadoVisible(ticket)]?.bg || '#f8fafc',
-                              color: colorEstado[estadoVisible(ticket)]?.color || '#64748b',
+                              background: colorEstado[ticket.stateLabel]?.bg || '#f8fafc',
+                              color: colorEstado[ticket.stateLabel]?.color || '#64748b',
                             }}>
-                              {esEscalado(ticket) ? 'Escalado a 2do nivel' : (ESTADO_LABEL_ES[ticket.stateLabel] ?? ticket.stateLabel)}
+                              {ESTADO_LABEL_ES[ticket.stateLabel] ?? ticket.stateLabel}
                             </span>
                           </td>
                           <td style={{ ...styles.td, padding: tdPadding, textAlign: 'center' }}>
@@ -394,7 +317,7 @@ export default function Tickets() {
             </div>
             <div style={styles.bottomSheetBody}>{filtrosJSX}</div>
             <button style={styles.btnAplicar} onClick={() => setBottomSheetAbierto(false)}>
-              Ver {ticketsFiltrados.length} incidentes
+              Ver {tickets.length} incidentes
             </button>
           </div>
         </>
@@ -463,12 +386,6 @@ const styles = {
     flexDirection: 'column',
     gap: '16px',
   },
-  filtrosCard: {
-    background: 'white',
-    borderRadius: '8px',
-    padding: '16px 20px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-  },
   searchCard: {
     background: 'white',
     borderRadius: '8px',
@@ -505,6 +422,12 @@ const styles = {
     cursor: 'pointer',
     fontFamily: "'Plus Jakarta Sans', sans-serif",
     whiteSpace: 'nowrap',
+  },
+  filtrosCard: {
+    background: 'white',
+    borderRadius: '8px',
+    padding: '16px 20px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
   },
   filtrosRow: {
     display: 'flex',
@@ -589,7 +512,7 @@ const styles = {
     color: '#1A3A5C',
   },
   trEven: { background: 'white' },
-  trOdd: { background: '#f8fafc' },
+  trOdd:  { background: '#f8fafc' },
   badge: {
     fontSize: '11px',
     padding: '3px 10px',

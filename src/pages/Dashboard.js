@@ -148,7 +148,7 @@ export default function Dashboard() {
                     <div
                       key={t.id}
                       style={styles.ticketRow}
-                      onClick={() => navigate('/tickets')}
+                      onClick={() => navigate(`/tickets?busqueda=${t.number}`)}
                     >
                       <span style={styles.ticketNum}>#{t.number.slice(-5)}</span>
                       <span style={styles.ticketTitle}>{t.title}</span>

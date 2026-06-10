@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { getTickets } from '../services/api';
@@ -35,7 +35,6 @@ export default function Tickets() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [tickets, setTickets] = useState([]);
-  const [totalTickets, setTotalTickets] = useState(0);
   const [filtroEstado, setFiltroEstado] = useState('Todos');
   const [filtroPrioridad, setFiltroPrioridad] = useState('Todas');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
@@ -55,10 +54,15 @@ export default function Tickets() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const estado = params.get('estado');
-    if (estado) setFiltroEstado(estado);
+    const busquedaParam = params.get('busqueda');
+    if (estado === 'resueltos')        setFiltroEstado('resueltos');
+    else if (estado === 'noResueltos') setFiltroEstado('noResueltos');
+    else if (estado === 'escalado')    setFiltroEstado('escalado');
+    else if (estado) setFiltroEstado(estado);
+    if (busquedaParam) setBusqueda(busquedaParam);
   }, [location.search]);
 
-  const fetchTickets = useCallback(() => {
+  useEffect(() => {
     const filtros = {
       estado: filtroEstado,
       prioridad: filtroPrioridad,
@@ -66,23 +70,25 @@ export default function Tickets() {
       hasta: filtroFechaHasta,
       busqueda,
     };
-    getTickets(filtros)
-      .then(data => setTickets(data))
-      .catch(err => console.error(err));
+
+    // Espera 300ms antes de llamar al back — evita llamadas simultáneas
+    const timer = setTimeout(() => {
+      getTickets(filtros)
+        .then(data => setTickets(data))
+        .catch(err => console.error(err));
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, busqueda]);
 
-  // Cargar total sin filtros para el contador
   useEffect(() => {
-    getTickets()
-      .then(data => setTotalTickets(data.length))
-      .catch(err => console.error(err));
-  }, []);
-
-  useEffect(() => {
-    fetchTickets();
-    const intervalo = setInterval(fetchTickets, 30000);
+    const intervalo = setInterval(() => {
+      getTickets({ estado: filtroEstado, prioridad: filtroPrioridad, desde: filtroFechaDesde, hasta: filtroFechaHasta, busqueda })
+        .then(data => setTickets(data))
+        .catch(err => console.error(err));
+    }, 30000);
     return () => clearInterval(intervalo);
-  }, [fetchTickets]);
+  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, busqueda]);
 
   const limpiarFiltros = () => {
     setFiltroEstado('Todos');
@@ -137,10 +143,10 @@ export default function Tickets() {
         <label style={styles.filtroLabel}>Estado</label>
         <select style={styles.select} value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
           <option value="Todos">Todos</option>
+          <option value="resueltos">Resuelto</option>
           <option value="New">Nuevo</option>
           <option value="In Progress">En progreso</option>
           <option value="On Hold">En espera</option>
-          <option value="Resolved">Resuelto</option>
           <option value="Closed">Cerrado</option>
           <option value="Canceled">Cancelado</option>
           <option value="escalado">Escalado a 2do nivel</option>
@@ -214,7 +220,7 @@ export default function Tickets() {
           {/* Tabla */}
           <div style={styles.tableCard}>
             <div style={styles.tableInfo}>
-              Mostrando {tickets.length} de {totalTickets} incidentes
+              Mostrando {tickets.length} incidentes
               {filtroEstado !== 'Todos' && <span style={{ color: '#2563A8', marginLeft: '8px' }}>— {labelFiltroEstado}</span>}
             </div>
             <div style={styles.tableWrapper}>

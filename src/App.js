@@ -7,8 +7,6 @@ import Dashboard from './pages/Dashboard';
 import Metricas from './pages/Metricas';
 import Tickets from './pages/Tickets';
 
-const SKIP_LOGIN = process.env.REACT_APP_SKIP_LOGIN === 'true';
-
 function InterceptorAxios() {
   const navigate = useNavigate();
 
@@ -16,7 +14,7 @@ function InterceptorAxios() {
     const interceptor = axios.interceptors.response.use(
       res => res,
       err => {
-        if (!SKIP_LOGIN && err.response?.status === 401) {
+        if (err.response?.status === 401) {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('userEmail');
           navigate('/login');
@@ -31,7 +29,9 @@ function InterceptorAxios() {
 }
 
 function RutaProtegida({ children }) {
-  return children;
+  const token = localStorage.getItem('accessToken');
+  const estaAutenticado = !!token;
+  return estaAutenticado ? children : <Navigate to="/login" />;
 }
 
 function App() {
@@ -39,7 +39,7 @@ function App() {
     <BrowserRouter>
       <InterceptorAxios />
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<RutaProtegida><Dashboard /></RutaProtegida>} />
         <Route path="/metricas" element={<RutaProtegida><Metricas /></RutaProtegida>} />

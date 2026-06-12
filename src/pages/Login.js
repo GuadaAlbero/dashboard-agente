@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const URL_BACK = process.env.REACT_APP_API_URL || '/api';
-const SKIP_LOGIN = process.env.REACT_APP_SKIP_LOGIN === 'true';
 
 function Login() {
   const [isRegistro, setIsRegistro] = useState(false);
@@ -22,13 +21,6 @@ function Login() {
   }, []);
 
   useEffect(() => {
-    if (SKIP_LOGIN) {
-      localStorage.setItem('accessToken', 'local-dev-token');
-      localStorage.setItem('userEmail', 'operador@mail.com');
-      navigate('/dashboard');
-      return;
-    }
-
     const token = localStorage.getItem('accessToken');
     if (token) navigate('/dashboard');
   }, [navigate]);

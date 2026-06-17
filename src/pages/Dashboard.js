@@ -90,7 +90,6 @@ export default function Dashboard() {
 
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
 
-          {/* Cards */}
           <div style={{ ...styles.metricsGrid, gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)' }}>
             {metricas.map((item) => (
               <div
@@ -109,7 +108,6 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Gráfico + Últimos tickets */}
           <div style={{ ...styles.bottomRow, flexDirection: isMobile ? 'column' : 'row' }}>
 
             <div style={{ ...styles.chartCard, width: isMobile ? '100%' : '42%', flexShrink: 0, padding: isMobile ? '16px' : '20px', boxSizing: 'border-box', minHeight: isMobile ? 'auto' : '380px' }}>

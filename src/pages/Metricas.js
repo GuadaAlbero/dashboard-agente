@@ -73,7 +73,6 @@ export default function Metricas() {
           {errorCarga && <div style={styles.errorMsg}>{errorCarga}</div>}
           {cargando  && <div style={styles.loadingMsg}>Cargando métricas...</div>}
 
-          {/* Layout principal: columna izquierda (cards + gráfico) | columna derecha (tabla) */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
@@ -81,10 +80,8 @@ export default function Metricas() {
             alignItems: 'start',
           }}>
 
-            {/* Columna izquierda */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              {/* Cards resumen */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div style={{ ...styles.summaryCard, borderTop: '4px solid #2563A8' }}>
                   <div style={styles.summaryLabel}>Total de tickets</div>
@@ -100,7 +97,6 @@ export default function Metricas() {
                 </div>
               </div>
 
-              {/* Gráfico de barras */}
               <div style={styles.card}>
                 <div style={styles.cardTitle}>Módulos con fallas recurrentes</div>
                 <ResponsiveContainer width="100%" height={240}>
@@ -142,7 +138,6 @@ export default function Metricas() {
 
             </div>
 
-            {/* Columna derecha: tabla */}
             <div style={styles.card}>
               <div style={styles.cardTitle}>Análisis de causa raíz por módulo</div>
               <div style={{ overflowX: 'auto' }}>

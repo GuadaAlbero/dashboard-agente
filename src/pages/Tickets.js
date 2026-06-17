@@ -71,7 +71,6 @@ export default function Tickets() {
       busqueda,
     };
 
-    // Espera 300ms antes de llamar al back — evita llamadas simultáneas
     const timer = setTimeout(() => {
       getTickets(filtros)
         .then(data => setTickets(data))

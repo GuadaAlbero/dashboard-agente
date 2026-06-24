@@ -744,8 +744,4 @@ Todas las funciones son `async` y retornan una promesa con los datos.
 
 El proyecto está configurado para desplegar en **Vercel**. El archivo `vercel.json` define un rewrite que evita problemas de CORS en producción redirigiendo `/api/*` al backend real. Para otros proveedores de hosting (Netlify, AWS S3 + CloudFront, etc.) se necesitará configurar un proxy equivalente o actualizar `REACT_APP_API_URL` directamente con la URL del backend.
 
----
 
-## Licencia
-
-Proyecto privado — uso interno.

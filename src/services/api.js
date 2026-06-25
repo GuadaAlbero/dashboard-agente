@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { mockTickets, mockMetricas, mockMetricasCalidad } from './mockData';
 
-const USE_MOCK = false; // ← cambiar a false cuando el back esté listo
+const USE_MOCK = false;
 const URL_BACK = process.env.REACT_APP_API_URL || '/api';
 
 const getAuthHeaders = () => ({

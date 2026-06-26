@@ -178,11 +178,11 @@ El proyecto usa un único archivo `.env` en la raíz del proyecto.
 ### Archivo `.env` de ejemplo
 
 ```env
-# URL del backend en local
-REACT_APP_API_URL=http://localhost:5038
+# URL del backend en producción
+REACT_APP_API_URL=https://api.agentai.classicaljo.ar
 
-# Para producción (ejemplo):
-# REACT_APP_API_URL=https://api.agentai.classicaljo.ar
+# Para desarrollo local (descomentar y comentar la línea de arriba):
+# REACT_APP_API_URL=http://localhost:5038
 ```
 
 > **Importante**: todas las variables de entorno de Create React App deben comenzar con el prefijo `REACT_APP_` para ser expuestas al código del navegador.
@@ -340,17 +340,19 @@ Luego reiniciar el servidor de desarrollo con `npm start`.
 Cada función de servicio sigue el mismo patrón:
 
 ```js
-export const getTickets = async (filtros = {}) => {
+export const getTickets = (filtros = {}) => {
   if (USE_MOCK) {
     // filtra mockTickets en memoria y retorna
-    return filtrarMock(mockTickets, filtros);
+    return Promise.resolve(filtrarMock(mockTickets, filtros));
   }
-  // petición real al backend con headers de auth
-  const response = await axios.get(`${URL_BACK}/tickets`, {
-    params: filtros,
+  // arma los query params y le pega al backend con headers de auth
+  const params = new URLSearchParams();
+  if (filtros.estado && filtros.estado !== 'Todos')
+    params.append('estado', filtros.estado.toLowerCase());
+  // ... resto de params ...
+  return axios.get(`${URL_BACK}/tickets?${params.toString()}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
-  });
-  return response.data;
+  }).then(res => res.data);
 };
 ```
 
@@ -432,7 +434,7 @@ Sin props ni UI. Al montarse registra un interceptor de respuestas en Axios que 
 **Comportamiento**:
 - En estado colapsado, muestra solo íconos (52 px de ancho).
 - En estado expandido, muestra ícono + etiqueta de texto (220 px de ancho).
-- El ítem de la página activa se resalta con fondo azul oscuro (`#1A3A5C`).
+- El ítem de la página activa se resalta con fondo azul claro y texto azul.
 - El botón de hamburguesa alterna entre los dos estados.
 - Al cerrar sesión limpia `accessToken` y `userEmail` de `localStorage` y navega a `/login`.
 
@@ -486,8 +488,8 @@ Sin props ni UI. Al montarse registra un interceptor de respuestas en Axios que 
    - En éxito: muestra mensaje de éxito y vuelve al formulario de login.
 
 **Renderiza**:
-- Layout de dos columnas en escritorio (imagen izquierda + formulario derecho).
-- Layout de una columna en móvil (solo formulario).
+- Layout de tarjeta centrada en escritorio sobre fondo `#f1f5f9`.
+- Layout de pantalla completa en móvil (sin card, fondo blanco).
 - Formulario con campo de email, contraseña y botón de acción.
 - Link para alternar entre registro y login.
 - Cuadros de alerta para errores e información.
@@ -532,12 +534,12 @@ Sin props ni UI. Al montarse registra un interceptor de respuestas en Axios que 
 
 1. **Tarjetas de métricas** (grilla de 4 en escritorio, 2 en móvil):
    - Ingresados, Resueltos, No resueltos, Escalados.
-   - Cada tarjeta tiene ícono, número grande y etiqueta.
+   - Cada tarjeta muestra el número grande y el porcentaje del total.
    - Son clicables: navegan a `/tickets?estado=<valor>` para ver el subconjunto correspondiente.
 
 2. **Gráfico de torta** (Recharts `PieChart`):
-   - Tres segmentos: Resueltos (verde), No Resueltos (rojo), Escalados (naranja).
-   - Etiquetas con porcentaje y cantidad absoluta.
+   - Tres segmentos: Resueltos (verde), No Resueltos (naranja), Escalados (rojo).
+   - Etiquetas con porcentaje.
    - En móvil: radio menor y sin leyenda lateral.
 
 3. **Últimos incidentes**:
@@ -569,7 +571,7 @@ Sin props ni UI. Al montarse registra un interceptor de respuestas en Axios que 
 **Ciclo de datos**:
 - Llama a `getMetricasCalidad()` al montarse.
 - Refresca cuando la ventana recupera el foco (`window focus`) o visibilidad (`visibilitychange`).
-- Usa una bandera `cancelado` para evitar actualizar estado en componentes desmontados.
+- Usa una bandera `activo` para evitar actualizar estado en componentes desmontados.
 
 **Cálculos derivados**:
 
@@ -586,23 +588,25 @@ Sin props ni UI. Al montarse registra un interceptor de respuestas en Axios que 
 | porcentaje ≥ 30 % | Alta | Rojo (`#E24B4A`) |
 | porcentaje ≥ 15 % | Media | Naranja (`#BA7517`) |
 | porcentaje ≥ 5 % | Baja | Verde (`#1D9E75`) |
-| porcentaje < 5 % | Sin prioridad | Gris (`#64748b`) |
+| porcentaje < 5 % | Sin prioridad | Gris (`#94a3b8`) |
 
 **Renderiza**:
 
-1. **Tarjetas de resumen** (2 columnas):
+1. **Tarjetas de resumen** (4 columnas en escritorio, 2 en móvil):
    - Total de tickets analizados.
    - Módulo más problemático con su porcentaje.
+   - Escalados a nivel 2.
+   - Cantidad de módulos analizados.
 
 2. **Gráfico de barras horizontal** (Recharts `BarChart`):
    - Eje Y: nombres de módulos.
    - Eje X: cantidad de fallas.
-   - Color de barra según criticidad: rojo (módulo top), naranja (≥ 6 fallas), azul (resto).
+   - Color de barra según criticidad (rojo para el módulo top, colores de prioridad para el resto).
 
 3. **Tabla de análisis**:
    - Columnas: Módulo / Tickets / % / Prioridad.
    - Ordenada de mayor a menor fallas.
-   - Filas con color alterno.
+   - Fila separada al pie para escalados a nivel 2.
    - Módulos con menos del 5 % se muestran en tono grisáceo.
 
 ---
@@ -633,7 +637,7 @@ Sin props ni UI. Al montarse registra un interceptor de respuestas en Axios que 
 
 **Parámetros de URL soportados**:
 
-Al navegar a `/tickets?estado=resuelto` o `/tickets?busqueda=INC0000064`, la página aplica automáticamente esos filtros. Esto permite que el Dashboard navegue directamente a una vista filtrada.
+Al navegar a `/tickets?estado=resueltos` o `/tickets?busqueda=INC0000064`, la página aplica automáticamente esos filtros. Esto permite que el Dashboard navegue directamente a una vista filtrada.
 
 **Estructura de un ticket**:
 
@@ -650,6 +654,10 @@ Al navegar a `/tickets?estado=resuelto` o `/tickets?busqueda=INC0000064`, la pá
 }
 ```
 
+**Debounce en filtros**:
+
+Cada cambio en los filtros o la búsqueda dispara un `setTimeout` de 300 ms antes de ejecutar la petición. Esto evita llamadas excesivas al backend mientras el usuario escribe o cambia filtros rápidamente. El timer se cancela si el estado vuelve a cambiar antes de que expire.
+
 **Ordenamiento**:
 - Columnas ordenables: Número, Título, Estado, Prioridad, Fecha de apertura, Última actualización.
 - Estado y Prioridad usan pesos numéricos para el ordenamiento semántico.
@@ -657,17 +665,16 @@ Al navegar a `/tickets?estado=resuelto` o `/tickets?busqueda=INC0000064`, la pá
 - Clic repetido en la misma columna alterna la dirección.
 
 **Búsqueda**:
-- Normaliza texto eliminando tildes (`NFD`/`NFC`) para comparación insensible a acentos.
-- Busca en: número de ticket, título, estado y prioridad.
+- En modo mock: normaliza texto eliminando tildes (`NFD`) para comparación insensible a acentos, y busca en número, título, estado y prioridad (incluyendo sus traducciones al español).
+- En modo real: el término se envía al backend como query param `busqueda`.
 
 **Renderiza**:
 
 1. **Barra de búsqueda**:
-   - Input con ícono de lupa.
-   - Botón ✕ para limpiar cuando hay texto.
+   - Input de texto con botón "Limpiar" cuando hay texto activo.
 
 2. **Filtros** (escritorio: fila horizontal; móvil: bottom sheet deslizable):
-   - Select de Estado: Todos / Resuelto / Nuevo / En Progreso / En Espera / Cerrado / Cancelado / Escalado.
+   - Select de Estado: Todos / Resuelto / Nuevo / En Progreso / En Espera / Cerrado / Cancelado / Escalado a 2do nivel.
    - Select de Prioridad: Todas / Alta / Moderada / Baja.
    - Inputs de fecha: Desde / Hasta.
    - Botón "Limpiar filtros" (solo visible cuando hay filtros activos).
@@ -677,25 +684,25 @@ Al navegar a `/tickets?estado=resuelto` o `/tickets?busqueda=INC0000064`, la pá
    - **Móvil**: columnas Número, Título, Estado, Prioridad + botón de expansión. Al expandir una fila se muestran las fechas.
    - Badges de estado y prioridad con colores semánticos.
    - Filas con color alterno.
-   - Texto "Mostrando X incidentes" en la parte inferior.
+   - Contador "Mostrando X incidentes" con el filtro activo destacado.
 
 **Colores de badges**:
 
-| Estado | Color de fondo |
+| Estado | Color |
 |---|---|
-| New | Azul claro |
-| In Progress | Naranja claro |
-| On Hold | Amarillo claro |
-| Resolved | Verde claro |
-| Closed | Gris claro |
-| Canceled | Rojo claro |
-| Escalado | Púrpura claro |
+| New | Azul |
+| In Progress | Naranja |
+| On Hold | Violeta |
+| Resolved | Verde |
+| Closed | Gris |
+| Canceled | Gris claro |
+| Escalado | Rojo |
 
-| Prioridad | Color de fondo |
+| Prioridad | Color |
 |---|---|
-| High | Rojo claro |
-| Moderate | Naranja claro |
-| Low | Verde claro |
+| High | Rojo |
+| Moderate | Naranja |
+| Low | Verde |
 
 ---
 
@@ -720,7 +727,7 @@ const URL_BACK = process.env.REACT_APP_API_URL || '/api';
 | `getMetricas()` | — | Obtiene métricas resumen `{ingresados, resueltos, noResueltos, escalados}` |
 | `getMetricasCalidad()` | — | Obtiene métricas de calidad `{fallasPorModulo: [{modulo, fallas}]}` |
 
-Todas las funciones son `async` y retornan una promesa con los datos.
+Todas las funciones retornan una promesa con los datos (`.then()` / `Promise.resolve()`).
 
 ---
 
@@ -735,7 +742,7 @@ Todas las funciones son `async` y retornan una promesa con los datos.
 | Export | Tipo | Descripción |
 |---|---|---|
 | `mockTickets` | `Ticket[]` | 15 incidentes de ejemplo con estados y prioridades variados |
-| `mockMetricas` | `object` | `{ingresados: 142, resueltos: 89, noResueltos: 38, escalados: 15}` |
+| `mockMetricas` | `object` | `{ingresados: 15, resueltos: 6, noResueltos: 7, escalados: 2}` |
 | `mockMetricasCalidad` | `object` | `{fallasPorModulo: [{modulo, fallas}]}` con 5 módulos de ejemplo |
 
 ---
@@ -743,5 +750,3 @@ Todas las funciones son `async` y retornan una promesa con los datos.
 ## Notas de despliegue
 
 El proyecto está configurado para desplegar en **Vercel**. El archivo `vercel.json` define un rewrite que evita problemas de CORS en producción redirigiendo `/api/*` al backend real. Para otros proveedores de hosting (Netlify, AWS S3 + CloudFront, etc.) se necesitará configurar un proxy equivalente o actualizar `REACT_APP_API_URL` directamente con la URL del backend.
-
-

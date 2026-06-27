@@ -39,10 +39,13 @@ export default function Tickets() {
   const [filtroPrioridad, setFiltroPrioridad] = useState('Todas');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
+  const [filtroTipoFecha, setFiltroTipoFecha] = useState('abierto');
   const [busqueda, setBusqueda] = useState('');
   const [orden, setOrden] = useState({ columna: 'openedAt', direccion: 'desc' });
   const [filaExpandida, setFilaExpandida] = useState(null);
   const [bottomSheetAbierto, setBottomSheetAbierto] = useState(false);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [porPagina, setPorPagina] = useState(25);
   const location = useLocation();
 
   useEffect(() => {
@@ -68,33 +71,36 @@ export default function Tickets() {
       prioridad: filtroPrioridad,
       desde: filtroFechaDesde,
       hasta: filtroFechaHasta,
+      tipofecha: filtroTipoFecha,
       busqueda,
     };
 
     const timer = setTimeout(() => {
       getTickets(filtros)
-        .then(data => setTickets(data))
+        .then(data => { setTickets(data); setPaginaActual(1); })
         .catch(err => console.error(err));
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, busqueda]);
+  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, filtroTipoFecha, busqueda]);
 
   useEffect(() => {
     const intervalo = setInterval(() => {
-      getTickets({ estado: filtroEstado, prioridad: filtroPrioridad, desde: filtroFechaDesde, hasta: filtroFechaHasta, busqueda })
+      getTickets({ estado: filtroEstado, prioridad: filtroPrioridad, desde: filtroFechaDesde, hasta: filtroFechaHasta, tipofecha: filtroTipoFecha, busqueda })
         .then(data => setTickets(data))
         .catch(err => console.error(err));
     }, 30000);
     return () => clearInterval(intervalo);
-  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, busqueda]);
+  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, filtroTipoFecha, busqueda]);
 
   const limpiarFiltros = () => {
     setFiltroEstado('Todos');
     setFiltroPrioridad('Todas');
     setFiltroFechaDesde('');
     setFiltroFechaHasta('');
+    setFiltroTipoFecha('abierto');
     setBusqueda('');
+    setPaginaActual(1);
   };
 
   const toggleOrden = (columna) => {
@@ -125,6 +131,10 @@ export default function Tickets() {
   });
 
   const hayFiltrosActivos = filtroEstado !== 'Todos' || filtroPrioridad !== 'Todas' || filtroFechaDesde || filtroFechaHasta || busqueda.trim();
+
+  const totalPaginas = Math.max(1, Math.ceil(ticketsOrdenados.length / porPagina));
+  const paginaSegura = Math.min(paginaActual, totalPaginas);
+  const ticketsPagina = ticketsOrdenados.slice((paginaSegura - 1) * porPagina, paginaSegura * porPagina);
 
   const labelFiltroEstado =
     filtroEstado === 'noResueltos' ? 'No resueltos' :
@@ -161,11 +171,18 @@ export default function Tickets() {
         </select>
       </div>
       <div style={styles.filtroGrupo}>
-        <label style={styles.filtroLabel}>Desde</label>
+        <label style={styles.filtroLabel}>Filtrar fecha por</label>
+        <select style={styles.select} value={filtroTipoFecha} onChange={e => setFiltroTipoFecha(e.target.value)}>
+          <option value="abierto">Fecha de apertura</option>
+          <option value="actualizado">Fecha de actualización</option>
+        </select>
+      </div>
+      <div style={styles.filtroGrupo}>
+        <label style={styles.filtroLabel}>Desde ({filtroTipoFecha === 'actualizado' ? 'actualización' : 'apertura'})</label>
         <input style={styles.inputFecha} type="date" value={filtroFechaDesde} onChange={e => setFiltroFechaDesde(e.target.value)} />
       </div>
       <div style={styles.filtroGrupo}>
-        <label style={styles.filtroLabel}>Hasta</label>
+        <label style={styles.filtroLabel}>Hasta ({filtroTipoFecha === 'actualizado' ? 'actualización' : 'apertura'})</label>
         <input style={styles.inputFecha} type="date" value={filtroFechaHasta} onChange={e => setFiltroFechaHasta(e.target.value)} />
       </div>
       {hayFiltrosActivos && (
@@ -219,9 +236,35 @@ export default function Tickets() {
           {/* Tabla */}
           <div style={styles.tableCard}>
             <div style={styles.tableInfo}>
-              Mostrando {tickets.length} incidentes
+              <span>
+                Mostrando {ticketsOrdenados.length === 0 ? 0 : (paginaSegura - 1) * porPagina + 1}–{Math.min(paginaSegura * porPagina, ticketsOrdenados.length)} de {ticketsOrdenados.length} incidentes
+              </span>
               {filtroEstado !== 'Todos' && <span style={{ color: '#2563A8', marginLeft: '8px' }}>— {labelFiltroEstado}</span>}
+              {(filtroFechaDesde || filtroFechaHasta) && (
+                <span style={{ color: '#64748b', marginLeft: '8px' }}>
+                  — filtrando por fecha de {filtroTipoFecha === 'actualizado' ? 'actualización' : 'apertura'}
+                </span>
+              )}
             </div>
+            {/* Controles superiores de paginación */}
+            <div style={styles.paginacionRow}>
+              <div style={styles.paginacionInfo}>
+                Página {paginaSegura} de {totalPaginas}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={styles.filtroLabel}>Por página</label>
+                <select
+                  style={{ ...styles.select, padding: '4px 8px', fontSize: '12px' }}
+                  value={porPagina}
+                  onChange={e => { setPorPagina(Number(e.target.value)); setPaginaActual(1); }}
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
             <div style={styles.tableWrapper}>
               <table style={styles.table}>
                 <thead>
@@ -240,14 +283,14 @@ export default function Tickets() {
                   </tr>
                 </thead>
                 <tbody>
-                  {ticketsOrdenados.length === 0 ? (
+                  {ticketsPagina.length === 0 ? (
                     <tr>
                       <td colSpan={isMobile ? 5 : 6} style={{ ...styles.td, textAlign: 'center', color: '#94a3b8', padding: '32px' }}>
                         No hay incidentes que coincidan con los filtros.
                       </td>
                     </tr>
                   ) : (
-                    ticketsOrdenados.map((ticket, index) => (
+                    ticketsPagina.map((ticket, index) => (
                       <React.Fragment key={ticket.id}>
                         <tr style={index % 2 === 0 ? styles.trEven : styles.trOdd} onClick={() => isMobile && toggleFila(ticket.id)}>
                           {isMobile && (
@@ -307,6 +350,59 @@ export default function Tickets() {
                 </tbody>
               </table>
             </div>
+
+            {/* Controles inferiores de paginación */}
+            {totalPaginas > 1 && (
+              <div style={{ ...styles.paginacionRow, marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                <button
+                  style={{ ...styles.btnPagina, opacity: paginaSegura === 1 ? 0.4 : 1, cursor: paginaSegura === 1 ? 'default' : 'pointer' }}
+                  onClick={() => setPaginaActual(1)}
+                  disabled={paginaSegura === 1}
+                >« Primera</button>
+                <button
+                  style={{ ...styles.btnPagina, opacity: paginaSegura === 1 ? 0.4 : 1, cursor: paginaSegura === 1 ? 'default' : 'pointer' }}
+                  onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                  disabled={paginaSegura === 1}
+                >‹ Anterior</button>
+
+                <div style={styles.paginacionNums}>
+                  {Array.from({ length: totalPaginas }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === totalPaginas || Math.abs(p - paginaSegura) <= 2)
+                    .reduce((acc, p, idx, arr) => {
+                      if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      item === '...'
+                        ? <span key={`ellipsis-${idx}`} style={{ padding: '0 4px', color: '#94a3b8' }}>…</span>
+                        : <button
+                            key={item}
+                            style={{
+                              ...styles.btnPagina,
+                              background: item === paginaSegura ? '#1A3A5C' : 'white',
+                              color: item === paginaSegura ? 'white' : '#1A3A5C',
+                              fontWeight: item === paginaSegura ? '700' : '500',
+                              borderColor: item === paginaSegura ? '#1A3A5C' : '#e2e8f0',
+                            }}
+                            onClick={() => setPaginaActual(item)}
+                          >{item}</button>
+                    )
+                  }
+                </div>
+
+                <button
+                  style={{ ...styles.btnPagina, opacity: paginaSegura === totalPaginas ? 0.4 : 1, cursor: paginaSegura === totalPaginas ? 'default' : 'pointer' }}
+                  onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                  disabled={paginaSegura === totalPaginas}
+                >Siguiente ›</button>
+                <button
+                  style={{ ...styles.btnPagina, opacity: paginaSegura === totalPaginas ? 0.4 : 1, cursor: paginaSegura === totalPaginas ? 'default' : 'pointer' }}
+                  onClick={() => setPaginaActual(totalPaginas)}
+                  disabled={paginaSegura === totalPaginas}
+                >Última »</button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -518,6 +614,36 @@ const styles = {
   },
   trEven: { background: 'white' },
   trOdd:  { background: '#f8fafc' },
+  paginacionRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: '8px',
+    marginBottom: '12px',
+  },
+  paginacionInfo: {
+    fontSize: '12px',
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  paginacionNums: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+  },
+  btnPagina: {
+    fontSize: '12px',
+    padding: '5px 10px',
+    borderRadius: '6px',
+    border: '1px solid #e2e8f0',
+    background: 'white',
+    color: '#1A3A5C',
+    fontWeight: '500',
+    cursor: 'pointer',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    transition: 'background 0.15s',
+  },
   badge: {
     fontSize: '11px',
     padding: '3px 10px',

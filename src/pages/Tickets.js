@@ -222,7 +222,6 @@ export default function Tickets() {
 
         <div style={{ ...styles.content, padding: isMobile ? '12px' : '20px 24px' }}>
 
-          {/* Buscador */}
           <div style={styles.searchCard}>
             <label style={styles.filtroLabel}>Buscar incidente</label>
             <div style={styles.searchRow}>
@@ -239,14 +238,12 @@ export default function Tickets() {
             </div>
           </div>
 
-          {/* Filtros desktop */}
           {!isMobile && (
             <div style={styles.filtrosCard}>
               <div style={{ ...styles.filtrosRow, flexDirection: 'row' }}>{filtrosJSX}</div>
             </div>
           )}
 
-          {/* Tabla */}
           <div style={styles.tableCard}>
             <div style={styles.tableInfo}>
               <span>
@@ -262,7 +259,7 @@ export default function Tickets() {
                 <span style={{ color: '#64748b', marginLeft: '8px' }}>— últimos 60</span>
               )}
             </div>
-            {/* Controles superiores de paginación */}
+
             <div style={styles.paginacionRow}>
               <div style={styles.paginacionInfo}>
                 Página {paginaSegura} de {totalPaginas}
@@ -367,7 +364,6 @@ export default function Tickets() {
               </table>
             </div>
 
-            {/* Controles inferiores de paginación */}
             {totalPaginas > 1 && (
               <div style={{ ...styles.paginacionRow, marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
                 <button

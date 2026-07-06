@@ -40,6 +40,7 @@ export default function Tickets() {
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('');
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('');
   const [filtroTipoFecha, setFiltroTipoFecha] = useState('abierto');
+  const [mostrarTodos, setMostrarTodos] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [orden, setOrden] = useState({ columna: 'openedAt', direccion: 'desc' });
   const [filaExpandida, setFilaExpandida] = useState(null);
@@ -72,6 +73,7 @@ export default function Tickets() {
       desde: filtroFechaDesde,
       hasta: filtroFechaHasta,
       tipofecha: filtroTipoFecha,
+      mostrarTodos,
       busqueda,
     };
 
@@ -82,16 +84,16 @@ export default function Tickets() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, filtroTipoFecha, busqueda]);
+  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, filtroTipoFecha, mostrarTodos, busqueda]);
 
   useEffect(() => {
     const intervalo = setInterval(() => {
-      getTickets({ estado: filtroEstado, prioridad: filtroPrioridad, desde: filtroFechaDesde, hasta: filtroFechaHasta, tipofecha: filtroTipoFecha, busqueda })
+      getTickets({ estado: filtroEstado, prioridad: filtroPrioridad, desde: filtroFechaDesde, hasta: filtroFechaHasta, tipofecha: filtroTipoFecha, mostrarTodos, busqueda })
         .then(data => setTickets(data))
         .catch(err => console.error(err));
     }, 30000);
     return () => clearInterval(intervalo);
-  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, filtroTipoFecha, busqueda]);
+  }, [filtroEstado, filtroPrioridad, filtroFechaDesde, filtroFechaHasta, filtroTipoFecha, mostrarTodos, busqueda]);
 
   const limpiarFiltros = () => {
     setFiltroEstado('Todos');
@@ -185,6 +187,17 @@ export default function Tickets() {
         <label style={styles.filtroLabel}>Hasta ({filtroTipoFecha === 'actualizado' ? 'actualización' : 'apertura'})</label>
         <input style={styles.inputFecha} type="date" value={filtroFechaHasta} onChange={e => setFiltroFechaHasta(e.target.value)} />
       </div>
+      <div style={styles.filtroGrupo}>
+        <label style={styles.filtroLabel}>Mostrar</label>
+        <select
+          style={styles.select}
+          value={mostrarTodos ? 'todos' : 'ultimos60'}
+          onChange={e => { setMostrarTodos(e.target.value === 'todos'); setPaginaActual(1); }}
+        >
+          <option value="ultimos60">Últimos 60</option>
+          <option value="todos">Todos</option>
+        </select>
+      </div>
       {hayFiltrosActivos && (
         <button style={styles.btnLimpiar} onClick={limpiarFiltros}>Limpiar filtros</button>
       )}
@@ -244,6 +257,9 @@ export default function Tickets() {
                 <span style={{ color: '#64748b', marginLeft: '8px' }}>
                   — filtrando por fecha de {filtroTipoFecha === 'actualizado' ? 'actualización' : 'apertura'}
                 </span>
+              )}
+              {!mostrarTodos && (
+                <span style={{ color: '#64748b', marginLeft: '8px' }}>— últimos 60</span>
               )}
             </div>
             {/* Controles superiores de paginación */}

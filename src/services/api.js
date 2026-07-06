@@ -68,6 +68,7 @@ export const getTickets = (filtros = {}) => {
   if (filtros.hasta)     params.append('hasta',     filtros.hasta);
   if (filtros.tipofecha) params.append('tipofecha', filtros.tipofecha);
   if (filtros.busqueda && filtros.busqueda.trim()) params.append('busqueda', filtros.busqueda.trim());
+  if (filtros.mostrarTodos) params.append('todos', 'true');
 
   return axios.get(`${URL_BACK}/tickets?${params.toString()}`, { headers: getAuthHeaders() })
     .then(res => res.data);
